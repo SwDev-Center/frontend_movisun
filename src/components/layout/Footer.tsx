@@ -20,8 +20,8 @@ export function Footer({ advisors }: { advisors: Advisor[] }) {
               <p className="text-blue-400 text-xs">Tu tienda de tecnología</p>
               <div className="flex gap-3 mt-1">
                 {advisors.map((a) => (
-                  <a key={a.wa} href={`tel:+57${a.phone}`} className="text-blue-300 text-xs hover:text-white transition-colors flex items-center gap-1">
-                    <Phone size={9} /> {a.phone}
+                  <a key={a.wa} href={`tel:+57${a.phone}`} className="text-blue-300 text-xs hover:text-white transition-colors flex items-center gap-1 min-h-[24px]">
+                    <Phone size={9} aria-hidden="true" /> {a.phone}
                   </a>
                 ))}
               </div>
@@ -35,7 +35,8 @@ export function Footer({ advisors }: { advisors: Advisor[] }) {
                   <Link
                     key={s.label}
                     href={`/catalogo/${c.id}?sub=${encodeURIComponent(s.label)}`}
-                    className="block text-blue-400 hover:text-blue-200 text-xs py-0.5 transition-colors"
+                    // min-h-[24px]: objetivo táctil mínimo 24 px (2.5.8).
+                    className="flex items-center min-h-[24px] text-blue-400 hover:text-blue-200 text-xs transition-colors"
                   >
                     {s.label}
                   </Link>
@@ -47,7 +48,7 @@ export function Footer({ advisors }: { advisors: Advisor[] }) {
               {navItems
                 .filter((i) => i.href && !i.href.startsWith("/catalogo"))
                 .map((i) => (
-                  <Link key={i.id} href={i.href!} className="block text-blue-400 hover:text-blue-200 text-xs py-0.5 transition-colors">
+                  <Link key={i.id} href={i.href!} className="flex items-center min-h-[24px] text-blue-400 hover:text-blue-200 text-xs transition-colors">
                     {i.label}
                   </Link>
                 ))}
