@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X, Minus, Plus, CheckCircle } from "lucide-react";
 import { PRIMARY, COLOR_HEX, EASE } from "@/lib/constants";
 import { fmt, discountOf } from "@/lib/utils";
 import { useShop } from "@/context/ShopContext";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { Badge } from "@/components/ui/Badge";
 import { Stars } from "@/components/ui/Stars";
@@ -25,6 +26,9 @@ export function ProductModal() {
   const [qty, setQty] = useState(1);
   const [color, setColor] = useState<string | undefined>(product?.colors?.[0]);
   const disc = product ? discountOf(product) : null;
+  // Trampa de foco + Escape: el panel se comporta como un diálogo accesible.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, closeProduct);
 
   if (!product) return null;
 
@@ -43,7 +47,12 @@ export function ProductModal() {
     >
       <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={closeProduct} />
       <motion.div
-        className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl max-h-[92vh] overflow-y-auto"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-modal-title"
+        tabIndex={-1}
+        className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl max-h-[92vh] overflow-y-auto outline-none"
         variants={slideUp}
         initial="hidden"
         animate="visible"
@@ -54,9 +63,10 @@ export function ProductModal() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
           <button
             onClick={closeProduct}
+            aria-label="Cerrar"
             className="absolute top-4 right-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors backdrop-blur"
           >
-            <X size={17} />
+            <X size={17} aria-hidden="true" />
           </button>
           <div className="absolute top-4 left-4 flex gap-1.5">
             {product.badge && <Badge text={product.badge} />}
@@ -71,7 +81,7 @@ export function ProductModal() {
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">
             {product.subcategory}
           </p>
-          <h2 className="text-2xl font-extrabold text-foreground mb-2 leading-tight">{product.name}</h2>
+          <h2 id="product-modal-title" className="text-2xl font-extrabold text-foreground mb-2 leading-tight">{product.name}</h2>
           <div className="flex items-center gap-2 mb-4">
             <Stars rating={product.rating} />
             <span className="text-xs text-muted-foreground">
@@ -113,8 +123,9 @@ export function ProductModal() {
                       <span
                         className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full flex items-center justify-center text-white"
                         style={{ background: PRIMARY }}
+                        aria-hidden="true"
                       >
-                        <CheckCircle size={10} />
+                        <CheckCircle size={10} aria-hidden="true" />
                       </span>
                     )}
                   </button>
@@ -128,7 +139,7 @@ export function ProductModal() {
             <div className="grid grid-cols-1 gap-2">
               {product.features.map((f) => (
                 <div key={f} className="flex items-center gap-2.5">
-                  <CheckCircle size={13} className="shrink-0" style={{ color: PRIMARY }} />
+                  <CheckCircle size={13} className="shrink-0" style={{ color: PRIMARY }} aria-hidden="true" />
                   <span className="text-sm text-foreground/70">{f}</span>
                 </div>
               ))}
@@ -139,14 +150,15 @@ export function ProductModal() {
             <div className="flex items-center border border-border rounded-xl overflow-hidden">
               <button
                 onClick={() => setQty(Math.max(1, qty - 1))}
+                aria-label="Disminuir cantidad"
                 className="px-3 py-3 hover:bg-muted transition-colors"
                 style={{ color: PRIMARY }}
               >
-                <Minus size={14} />
+                <Minus size={14} aria-hidden="true" />
               </button>
               <span className="w-8 text-center font-bold text-sm">{qty}</span>
-              <button onClick={() => setQty(qty + 1)} className="px-3 py-3 hover:bg-muted transition-colors" style={{ color: PRIMARY }}>
-                <Plus size={14} />
+              <button onClick={() => setQty(qty + 1)} aria-label="Aumentar cantidad" className="px-3 py-3 hover:bg-muted transition-colors" style={{ color: PRIMARY }}>
+                <Plus size={14} aria-hidden="true" />
               </button>
             </div>
             <button

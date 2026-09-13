@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { motion } from "motion/react";
 import { ShoppingCart, X, Minus, Plus } from "lucide-react";
 import { PRIMARY, COLOR_HEX, EASE } from "@/lib/constants";
@@ -7,6 +8,7 @@ import { fmt, buildOrderUrl } from "@/lib/utils";
 import type { Advisor } from "@/lib/types";
 import { useShop } from "@/context/ShopContext";
 import { useCart } from "@/context/CartContext";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { WaIcon } from "@/components/ui/WaIcon";
 import { ProductImage } from "@/components/ui/ProductImage";
 
@@ -24,12 +26,20 @@ export function CartDrawer({ advisors }: { advisors: Advisor[] }) {
   const { closeCart } = useShop();
   const { items, count, total, updateQty, removeItem } = useCart();
   const salesWa = advisors[0]?.wa ?? "";
+  // Trampa de foco + Escape: el panel es un diálogo accesible.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, closeCart);
 
   return (
     <motion.div className="fixed inset-0 z-[60] flex justify-end" variants={fadeIn} initial="hidden" animate="visible" exit="hidden">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeCart} />
       <motion.div
-        className="relative w-full max-w-sm bg-white h-full flex flex-col shadow-2xl"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-drawer-title"
+        tabIndex={-1}
+        className="relative w-full max-w-sm bg-white h-full flex flex-col shadow-2xl outline-none"
         variants={slideRight}
         initial="hidden"
         animate="visible"
@@ -37,8 +47,8 @@ export function CartDrawer({ advisors }: { advisors: Advisor[] }) {
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <ShoppingCart size={19} style={{ color: PRIMARY }} />
-            <h2 className="font-extrabold text-lg text-foreground">Carrito</h2>
+            <ShoppingCart size={19} style={{ color: PRIMARY }} aria-hidden="true" />
+            <h2 id="cart-drawer-title" className="font-extrabold text-lg text-foreground">Carrito</h2>
             {count > 0 && (
               <span
                 className="text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center"
@@ -48,14 +58,14 @@ export function CartDrawer({ advisors }: { advisors: Advisor[] }) {
               </span>
             )}
           </div>
-          <button onClick={closeCart} className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors">
-            <X size={17} />
+          <button onClick={closeCart} aria-label="Cerrar carrito" className="w-9 h-9 rounded-full hover:bg-muted flex items-center justify-center transition-colors">
+            <X size={17} aria-hidden="true" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
-              <ShoppingCart size={52} strokeWidth={1} />
+              <ShoppingCart size={52} strokeWidth={1} aria-hidden="true" />
               <div className="text-center">
                 <p className="font-semibold text-sm">Tu carrito está vacío</p>
                 <p className="text-xs mt-1">Agrega productos para comenzar</p>
@@ -91,12 +101,13 @@ export function CartDrawer({ advisors }: { advisors: Advisor[] }) {
                           onClick={() => (item.quantity > 1 ? updateQty(item.id, item.quantity - 1) : removeItem(item.id))}
                           className="px-2 py-1.5"
                           style={{ color: PRIMARY }}
+                          aria-label={item.quantity > 1 ? "Disminuir cantidad" : "Eliminar producto"}
                         >
-                          <Minus size={11} />
+                          <Minus size={11} aria-hidden="true" />
                         </button>
                         <span className="px-2 text-xs font-bold">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.id, item.quantity + 1)} className="px-2 py-1.5" style={{ color: PRIMARY }}>
-                          <Plus size={11} />
+                        <button onClick={() => updateQty(item.id, item.quantity + 1)} className="px-2 py-1.5" style={{ color: PRIMARY }} aria-label="Aumentar cantidad">
+                          <Plus size={11} aria-hidden="true" />
                         </button>
                       </div>
                       <button onClick={() => removeItem(item.id)} className="text-[11px] font-semibold text-red-500 hover:text-red-700 transition-colors">
@@ -130,7 +141,8 @@ export function CartDrawer({ advisors }: { advisors: Advisor[] }) {
               href={buildOrderUrl(items, salesWa)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl font-bold text-sm text-white bg-[#25D366] hover:bg-[#1ebe5d] transition-colors"
+              // Verde oscuro (#15803D, 5.0:1 con texto blanco) para cumplir AA.
+              className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl font-bold text-sm text-white bg-(--wa-btn) hover:bg-(--wa-btn-hover) transition-colors"
             >
               <WaIcon size={18} /> Pedir por WhatsApp
             </a>
