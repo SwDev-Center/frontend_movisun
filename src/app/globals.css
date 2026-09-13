@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0d1b35;
+  --card: #ffffff;
+  --card-foreground: #0d1b35;
+  --popover: #ffffff;
+  --popover-foreground: #0d1b35;
+  --primary: #1a2f5f;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f4fc;
+  --secondary-foreground: #1e3a72;
+  --muted: #f5f7fc;
+  --muted-foreground: #7585a4;
+  --accent: #1e3a72;
+  --accent-foreground: #ffffff;
+  --destructive: #c8102e;
+  --destructive-foreground: #ffffff;
+  --border: rgba(26, 47, 95, 0.1);
+  --input: rgba(26, 47, 95, 0.1);
+  --ring: #1a2f5f;
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-plus-jakarta-sans);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+  }
+}
