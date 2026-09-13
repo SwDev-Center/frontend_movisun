@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { EASE } from "@/lib/constants";
 import { ProductImage } from "@/components/ui/ProductImage";
@@ -45,25 +45,32 @@ export function ImageCarousel() {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Si el usuario prefiere menos movimiento no se avanza solo (WCAG 2.2.2).
+  const reduceMotion = useReducedMotion();
   const advance = useCallback(
     (dir: 1 | -1) => setIdx((i) => (i + dir + SLIDES.length) % SLIDES.length),
     []
   );
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || reduceMotion) return;
     const t = setInterval(() => advance(1), 5000);
     return () => clearInterval(t);
-  }, [paused, advance]);
+  }, [paused, reduceMotion, advance]);
 
   const slide = SLIDES[idx];
 
   return (
     <section
+      aria-roledescription="carrusel"
+      aria-label="Categorías destacadas"
       className="relative w-full overflow-hidden"
       style={{ height: "min(580px, 80vw)" }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      // Pausar también con el foco del teclado, no solo con el mouse.
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -99,35 +106,42 @@ export function ImageCarousel() {
               className="inline-flex items-center gap-2 bg-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
               style={{ color: "#1A2F5F" }}
             >
-              Ver categoría <ArrowRight size={15} />
+              Ver categoría <ArrowRight size={15} aria-hidden="true" />
             </button>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1">
         {SLIDES.map((_, i) => (
           <button
             key={i}
             onClick={() => setIdx(i)}
-            className={`rounded-full transition-all duration-300 ${i === idx ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/40"}`}
-          />
+            aria-label={`Ir a la diapositiva ${i + 1}`}
+            aria-current={i === idx ? "true" : undefined}
+            className="flex items-center justify-center p-2"
+          >
+            <span
+              aria-hidden="true"
+              className={`block rounded-full transition-all duration-300 ${i === idx ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/60"}`}
+            />
+          </button>
         ))}
       </div>
 
       <button
         onClick={() => advance(-1)}
         className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/25 transition-colors hidden sm:flex"
-        aria-label="Anterior"
+        aria-label="Diapositiva anterior"
       >
-        <ChevronRight size={18} className="rotate-180" />
+        <ChevronRight size={18} className="rotate-180" aria-hidden="true" />
       </button>
       <button
         onClick={() => advance(1)}
         className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/25 transition-colors hidden sm:flex"
-        aria-label="Siguiente"
+        aria-label="Diapositiva siguiente"
       >
-        <ChevronRight size={18} />
+        <ChevronRight size={18} aria-hidden="true" />
       </button>
     </section>
   );

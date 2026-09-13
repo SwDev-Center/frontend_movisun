@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, type Variants } from "motion/react";
+import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PRIMARY, EASE } from "@/lib/constants";
 import type { Product } from "@/lib/types";
@@ -16,17 +16,19 @@ export function NewProductsCarousel({ products }: { products: Product[] }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const visible = 2;
+  // Con "reducir movimiento" no se avanza automáticamente (WCAG 2.2.2).
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (paused || products.length <= visible) return;
+    if (paused || reduceMotion || products.length <= visible) return;
     const t = setInterval(() => setIdx((i) => (i + 1) % (products.length - visible + 1)), 3500);
     return () => clearInterval(t);
-  }, [paused, products.length]);
+  }, [paused, reduceMotion, products.length]);
 
   const maxIdx = Math.max(0, products.length - visible);
 
   return (
-    <section className="py-16 px-4 bg-white">
+    <section aria-roledescription="carrusel" aria-label="Productos nuevos" className="py-16 px-4 bg-white">
       <div className="max-w-5xl mx-auto">
         <motion.div
           initial="hidden"
@@ -49,7 +51,7 @@ export function NewProductsCarousel({ products }: { products: Product[] }) {
                 disabled={idx === 0}
                 aria-label="Anterior"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <button
                 onClick={() => setIdx((i) => Math.min(maxIdx, i + 1))}
@@ -57,13 +59,13 @@ export function NewProductsCarousel({ products }: { products: Product[] }) {
                 disabled={idx >= maxIdx}
                 aria-label="Siguiente"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
           )}
         </motion.div>
 
-        <div className="overflow-hidden" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <div className="overflow-hidden" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
           <motion.div
             className="flex gap-4"
             animate={{ x: `-${idx * (100 / visible)}%` }}
@@ -78,14 +80,21 @@ export function NewProductsCarousel({ products }: { products: Product[] }) {
         </div>
 
         {maxIdx > 0 && (
-          <div className="flex justify-center gap-1.5 mt-5">
+          <div className="flex justify-center gap-1 mt-5">
             {Array.from({ length: maxIdx + 1 }).map((_, i) => (
               <button
                 key={i}
                 onClick={() => setIdx(i)}
-                className={`rounded-full transition-all ${i === idx ? "w-5 h-2" : "w-2 h-2 bg-gray-200"}`}
-                style={i === idx ? { background: PRIMARY } : {}}
-              />
+                aria-label={`Ir a la diapositiva ${i + 1}`}
+                aria-current={i === idx ? "true" : undefined}
+                className="flex items-center justify-center p-2"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`block rounded-full transition-all ${i === idx ? "w-5 h-2" : "w-2 h-2 bg-gray-300"}`}
+                  style={i === idx ? { background: PRIMARY } : {}}
+                />
+              </button>
             ))}
           </div>
         )}
