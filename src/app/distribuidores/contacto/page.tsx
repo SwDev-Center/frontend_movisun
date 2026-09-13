@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { MessageCircle, Phone } from "lucide-react";
 import { PRIMARY } from "@/lib/constants";
 import { getAdvisors } from "@/api/advisors";
 import { Reveal, RevealItem } from "@/components/ui/Reveal";
 import { WaIcon } from "@/components/ui/WaIcon";
+
+// Metadata SEO de la página de contacto para distribuidores.
+export const metadata: Metadata = {
+  title: "Contacto Distribuidores",
+  description:
+    "Contáctanos para ser distribuidor Movisun Nariño: habla por WhatsApp con nuestro equipo de ventas y recibe respuesta en menos de 24 horas.",
+  alternates: { canonical: "/distribuidores/contacto" },
+};
 
 export default async function DistribuidoresContactoPage() {
   const advisors = await getAdvisors();

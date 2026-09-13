@@ -1,6 +1,21 @@
+import type { Metadata } from "next";
 import { CheckCircle, Package, TrendingUp, Info, Users } from "lucide-react";
 import { PRIMARY } from "@/lib/constants";
 import { Reveal, RevealItem } from "@/components/ui/Reveal";
+
+// Metadata SEO de la página del programa de distribuidores.
+export const metadata: Metadata = {
+  title: "Programa de Distribuidores",
+  description:
+    "Conviértete en distribuidor Movisun Nariño: precios de mayorista, catálogo completo de tecnología y apoyo comercial. Pedido mínimo inicial de $500.000 COP.",
+  alternates: { canonical: "/distribuidores" },
+  openGraph: {
+    title: "Programa de Distribuidores | Movisun Nariño",
+    description: "Únete a la red de distribuidores Movisun Nariño y lleva la mejor tecnología a tu región.",
+    url: "/distribuidores",
+    type: "website",
+  },
+};
 
 const BENEFITS = [
   {
@@ -44,7 +59,8 @@ export default function DistribuidoresPage() {
                   {item.icon}
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
+                  {/* Beneficio como h2 (antes h3) para respetar la jerarquía de encabezados. */}
+              <h2 className="font-bold text-foreground mb-1">{item.title}</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
               </div>

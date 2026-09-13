@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PRIMARY } from "@/lib/constants";
+
+// Página 404: no debe indexarse ni seguir enlaces desde aquí.
+export const metadata: Metadata = {
+  title: "Página no encontrada",
+  robots: { index: false, follow: false },
+};
 
 export default function NotFound() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence, type Variants } from "motion/react";
 import { Search, SlidersHorizontal, TrendingUp, Tag, Star, Package, ChevronRight } from "lucide-react";
 import { PRIMARY, WHATSAPP_GREEN, EASE } from "@/lib/constants";
@@ -41,7 +41,6 @@ const stagger: Variants = {
 };
 
 export function CatalogView({ category, products, initialSub = null }: { category: Category; products: Product[]; initialSub?: string | null }) {
-  const router = useRouter();
   const [activeSub, setActiveSub] = useState<string | null>(initialSub);
   const [sortBy, setSortBy] = useState<SortKey>("nuevos");
   const [priceRange, setPriceRange] = useState<PriceRange>("all");
@@ -93,9 +92,11 @@ export function CatalogView({ category, products, initialSub = null }: { categor
     <div className="min-h-screen py-10 bg-white pt-24">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
-          <button onClick={() => router.push("/")} className="hover:text-primary transition-colors">
+          {/* Migas de pan: enlace real a la home en lugar de un botón para
+              que los buscadores puedan recorrer la jerarquía del sitio. */}
+          <Link href="/" className="hover:text-primary transition-colors">
             Inicio
-          </button>
+          </Link>
           <ChevronRight size={11} />
           <span style={{ color: PRIMARY }} className="font-semibold">
             {category.label}
@@ -115,7 +116,9 @@ export function CatalogView({ category, products, initialSub = null }: { categor
             </div>
             <div>
               <p className="text-blue-200 text-xs font-bold tracking-widest uppercase mb-1">{category.tagline}</p>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-white">{category.label}</h3>
+              {/* Título principal de la página (antes era un h3) para que solo
+              exista un h1 real por ruta. */}
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">{category.label}</h1>
               <p className="text-blue-200/80 text-sm mt-1 hidden sm:block max-w-xs">{category.description}</p>
             </div>
           </div>
