@@ -91,8 +91,9 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+        {/* Navegación principal (desktop): misma estructura en todas las
+            páginas para una navegación consistente (WCAG 3.2.3). */}
+        <nav aria-label="Navegación principal" className="hidden lg:flex items-center gap-0.5 flex-1">
           {navItems.map((item) => {
             const hasChildren = !!item.children?.length;
             const isActive = isNavActive(pathname, item) || isChildActive(pathname, item);
@@ -102,9 +103,21 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                 className="relative"
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
+                onFocus={() => setHoveredItem(item.id)}
+                onBlur={(e) => {
+                  // Cerrar el submenú solo cuando el foco sale por completo
+                  // del bloque padre (permite recorrer los hijos con teclado).
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHoveredItem(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setHoveredItem(null);
+                }}
               >
                 <Link
                   href={item.href ?? "#"}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-haspopup={hasChildren ? "menu" : undefined}
+                  aria-expanded={hasChildren ? hoveredItem === item.id : undefined}
                   className={`flex items-center gap-1 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all whitespace-nowrap ${
                     isActive
                       ? transparent
@@ -117,7 +130,11 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                 >
                   {item.label}
                   {hasChildren && (
-                    <ChevronDown size={12} className={`transition-transform ${hoveredItem === item.id ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      size={12}
+                      aria-hidden="true"
+                      className={`transition-transform ${hoveredItem === item.id ? "rotate-180" : ""}`}
+                    />
                   )}
                 </Link>
                 <AnimatePresence>
@@ -135,7 +152,7 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                           href={child.href ?? "#"}
                           className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted hover:text-primary transition-colors"
                         >
-                          <ChevronRight size={12} style={{ color: PRIMARY }} /> {child.label}
+                          <ChevronRight size={12} style={{ color: PRIMARY }} aria-hidden="true" /> {child.label}
                         </Link>
                       ))}
                     </motion.div>
@@ -151,6 +168,7 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
           <AnimatePresence>
             {searchOpen && (
               <motion.div
+                id="desktop-search-panel"
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 200, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
@@ -158,18 +176,23 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                 className="hidden md:flex overflow-hidden"
               >
                 <div className={`flex items-center gap-2 rounded-xl px-3 py-2 w-full ${transparent ? "bg-white/15 border border-white/20" : "bg-muted border border-border"}`}>
-                  <Search size={13} className={transparent ? "text-blue-200" : "text-muted-foreground"} />
+                  <Search size={13} className={transparent ? "text-blue-200" : "text-muted-foreground"} aria-hidden="true" />
                   <input
                     ref={searchRef}
-                    type="text"
+                    type="search"
+                    aria-label="Buscar"
                     placeholder="Buscar..."
                     value={searchVal}
                     onChange={(e) => setSearchVal(e.target.value)}
-                    className={`bg-transparent text-sm outline-none flex-1 ${transparent ? "text-white placeholder:text-blue-300" : "text-foreground placeholder:text-muted-foreground"}`}
+                    className={`bg-transparent text-sm flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                      transparent
+                        ? "text-white placeholder:text-blue-200 focus-visible:outline-white"
+                        : "text-foreground placeholder:text-muted-foreground focus-visible:outline-ring"
+                    }`}
                   />
                   {searchVal && (
-                    <button onClick={() => setSearchVal("")}>
-                      <X size={12} />
+                    <button onClick={() => setSearchVal("")} aria-label="Limpiar búsqueda" className="hover:opacity-75 transition-opacity">
+                      <X size={12} aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -178,12 +201,14 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
           </AnimatePresence>
           <button
             onClick={() => setSearchOpen((s) => !s)}
+            aria-expanded={searchOpen}
+            aria-controls="desktop-search-panel"
             className={`hidden md:flex w-9 h-9 items-center justify-center rounded-xl transition-all ${
               transparent ? "text-white hover:bg-white/15" : "text-muted-foreground hover:bg-muted"
             }`}
             aria-label="Buscar"
           >
-            {searchOpen ? <X size={17} /> : <Search size={17} />}
+            {searchOpen ? <X size={17} aria-hidden="true" /> : <Search size={17} aria-hidden="true" />}
           </button>
           <button
             onClick={openCart}
@@ -193,14 +218,16 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
             style={!transparent ? { color: PRIMARY } : {}}
             aria-label="Carrito"
           >
-            <ShoppingCart size={19} />
+            <ShoppingCart size={19} aria-hidden="true" />
             <AnimatePresence>
               {count > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
-                  className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-[#25D366] text-white text-[9px] font-bold rounded-full flex items-center justify-center"
+                  aria-live="polite"
+                  // Verde oscuro para que el número blanco cumpla el contraste AA.
+                  className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-(--wa-btn) text-white text-[9px] font-bold rounded-full flex items-center justify-center"
                 >
                   {count}
                 </motion.span>
@@ -209,39 +236,47 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
           </button>
           <button
             onClick={() => setMobileOpen((o) => !o)}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-menu"
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
             className={`lg:hidden flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
               transparent ? "text-white hover:bg-white/15" : "text-foreground hover:bg-muted"
             }`}
-            aria-label="Menú"
           >
-            {mobileOpen ? <X size={19} /> : <Menu size={19} />}
+            {mobileOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Menú móvil: landmark propio, cierra con Escape y expone su estado */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
+          <motion.nav
+            id="mobile-menu"
+            aria-label="Menú móvil"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setMobileOpen(false);
+            }}
             className="lg:hidden bg-white border-t border-border overflow-hidden"
           >
             <div className="px-4 pt-3 pb-1">
               <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5 border border-border mb-2">
-                <Search size={14} className="text-muted-foreground" />
+                <Search size={14} className="text-muted-foreground" aria-hidden="true" />
                 <input
-                  type="text"
+                  type="search"
+                  aria-label="Buscar"
                   placeholder="Buscar productos..."
-                  className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
+                  className="bg-transparent text-sm flex-1 text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 />
               </div>
             </div>
             <div className="px-4 pb-2 flex gap-3">
               {advisors.map((a) => (
                 <a key={a.wa} href={`tel:+57${a.phone}`} className="flex items-center gap-1 text-xs font-medium" style={{ color: PRIMARY }}>
-                  <Phone size={10} /> {a.label}
+                  <Phone size={10} aria-hidden="true" /> {a.label}
                 </a>
               ))}
             </div>
@@ -254,6 +289,7 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                       <Link
                         href={item.href ?? "#"}
                         onClick={() => !hasChildren && setMobileOpen(false)}
+                        aria-current={isNavActive(pathname, item) ? "page" : undefined}
                         className="flex-1 flex items-center gap-2 text-left px-3 py-3 rounded-xl text-sm font-semibold transition-colors hover:bg-muted text-foreground"
                       >
                         {item.label}
@@ -261,10 +297,11 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                       {hasChildren && (
                         <button
                           onClick={() => setExpandedCat(expandedCat === item.id ? null : item.id)}
+                          aria-expanded={expandedCat === item.id}
                           className="px-3 py-3 rounded-xl hover:bg-muted transition-colors text-muted-foreground"
                           aria-label={`Desplegar ${item.label}`}
                         >
-                          <ChevronDown size={15} className={`transition-transform ${expandedCat === item.id ? "rotate-180" : ""}`} />
+                          <ChevronDown size={15} aria-hidden="true" className={`transition-transform ${expandedCat === item.id ? "rotate-180" : ""}`} />
                         </button>
                       )}
                     </div>
@@ -283,7 +320,7 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                               onClick={() => setMobileOpen(false)}
                               className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                             >
-                              <ChevronRight size={12} style={{ color: PRIMARY }} /> {child.label}
+                              <ChevronRight size={12} style={{ color: PRIMARY }} aria-hidden="true" /> {child.label}
                             </Link>
                           ))}
                         </motion.div>
@@ -293,7 +330,7 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
                 );
               })}
             </div>
-          </motion.div>
+          </motion.nav>
         )}
       </AnimatePresence>
     </header>
