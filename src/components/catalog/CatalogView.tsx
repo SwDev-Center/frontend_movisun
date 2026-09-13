@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, type Variants } from "motion/react";
 import { Search, SlidersHorizontal, TrendingUp, Tag, Star, Package, ChevronRight } from "lucide-react";
-import { PRIMARY, WHATSAPP_GREEN, EASE } from "@/lib/constants";
+import { PRIMARY, EASE } from "@/lib/constants";
 import type { Category, Product } from "@/lib/types";
 import { CATEGORY_ICONS } from "@/components/ui/categoryIcons";
 import { ProductImage } from "@/components/ui/ProductImage";
@@ -91,17 +91,17 @@ export function CatalogView({ category, products, initialSub = null }: { categor
   return (
     <div className="min-h-screen py-10 bg-white pt-24">
       <div className="max-w-5xl mx-auto px-4">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
+        <nav aria-label="Miga de pan" className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
           {/* Migas de pan: enlace real a la home en lugar de un botón para
               que los buscadores puedan recorrer la jerarquía del sitio. */}
           <Link href="/" className="hover:text-primary transition-colors">
             Inicio
           </Link>
-          <ChevronRight size={11} />
-          <span style={{ color: PRIMARY }} className="font-semibold">
+          <ChevronRight size={11} aria-hidden="true" />
+          <span style={{ color: PRIMARY }} className="font-semibold" aria-current="page">
             {category.label}
           </span>
-        </div>
+        </nav>
 
         {/* Category cover */}
         <div className="relative rounded-2xl overflow-hidden mb-5 h-32 sm:h-44">
@@ -112,7 +112,7 @@ export function CatalogView({ category, products, initialSub = null }: { categor
           />
           <div className="absolute inset-0 flex items-center gap-4 px-6 sm:px-10">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 bg-black/20 backdrop-blur">
-              <Icon size={22} />
+              <Icon size={22} aria-hidden="true" />
             </div>
             <div>
               <p className="text-blue-200 text-xs font-bold tracking-widest uppercase mb-1">{category.tagline}</p>
@@ -130,6 +130,7 @@ export function CatalogView({ category, products, initialSub = null }: { categor
             <>
               <button
                 onClick={() => setActiveSub(null)}
+                aria-pressed={!activeSub}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                   !activeSub ? "text-white border-transparent" : "text-muted-foreground border-border hover:bg-muted"
                 }`}
@@ -143,6 +144,7 @@ export function CatalogView({ category, products, initialSub = null }: { categor
                   <button
                     key={s.label}
                     onClick={() => setActiveSub(s.label === activeSub ? null : s.label)}
+                    aria-pressed={activeSub === s.label}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                       activeSub === s.label ? "text-white border-transparent" : "text-muted-foreground border-border hover:bg-muted"
                     }`}
@@ -156,13 +158,14 @@ export function CatalogView({ category, products, initialSub = null }: { categor
           )}
           <div className="ml-auto flex items-center gap-2">
             <div className="flex items-center gap-2 border border-border rounded-xl px-3 py-1.5 bg-muted">
-              <Search size={13} className="text-muted-foreground" />
+              <Search size={13} className="text-muted-foreground" aria-hidden="true" />
               <input
-                type="text"
+                type="search"
+                aria-label="Buscar en el catálogo"
                 placeholder="Buscar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-transparent text-xs outline-none w-24 text-foreground placeholder:text-muted-foreground"
+                className="bg-transparent text-xs w-24 md:w-40 text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               />
             </div>
             <button
@@ -195,13 +198,14 @@ export function CatalogView({ category, products, initialSub = null }: { categor
               <div className="bg-muted rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1">
-                    <TrendingUp size={11} /> Ordenar por
+                    <TrendingUp size={11} aria-hidden="true" /> Ordenar por
                   </p>
                   <div className="space-y-1">
                     {SORTS.map(([k, l]) => (
                       <button
                         key={k}
                         onClick={() => setSortBy(k)}
+                        aria-pressed={sortBy === k}
                         className={`block w-full text-left text-xs px-2 py-1 rounded-lg transition-colors ${
                           sortBy === k ? "font-bold text-white" : "text-muted-foreground hover:bg-white"
                         }`}
@@ -214,13 +218,14 @@ export function CatalogView({ category, products, initialSub = null }: { categor
                 </div>
                 <div>
                   <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1">
-                    <Tag size={11} /> Precio
+                    <Tag size={11} aria-hidden="true" /> Precio
                   </p>
                   <div className="space-y-1">
                     {PRICES.map(([k, l]) => (
                       <button
                         key={k}
                         onClick={() => setPriceRange(k)}
+                        aria-pressed={priceRange === k}
                         className={`block w-full text-left text-xs px-2 py-1 rounded-lg transition-colors ${
                           priceRange === k ? "font-bold text-white" : "text-muted-foreground hover:bg-white"
                         }`}
@@ -233,13 +238,14 @@ export function CatalogView({ category, products, initialSub = null }: { categor
                 </div>
                 <div>
                   <p className="text-xs font-bold text-foreground mb-2 flex items-center gap-1">
-                    <Star size={11} /> Valoración
+                    <Star size={11} aria-hidden="true" /> Valoración
                   </p>
                   <div className="space-y-1">
                     {RATINGS.map(([k, l]) => (
                       <button
                         key={k}
                         onClick={() => setMinRating(k)}
+                        aria-pressed={minRating === k}
                         className={`block w-full text-left text-xs px-2 py-1 rounded-lg transition-colors ${
                           minRating === k ? "font-bold text-white" : "text-muted-foreground hover:bg-white"
                         }`}
@@ -252,10 +258,20 @@ export function CatalogView({ category, products, initialSub = null }: { categor
                 </div>
                 <div>
                   <p className="text-xs font-bold text-foreground mb-2">Otros</p>
-                  <label className="flex items-center gap-2 cursor-pointer" onClick={() => setOnlyDiscount((d) => !d)}>
+                  {/* Switch real (checkbox nativo): el estado on/off es operable
+                      por teclado y anunciado por lectores de pantalla. */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      checked={onlyDiscount}
+                      onChange={(e) => setOnlyDiscount(e.target.checked)}
+                      className="sr-only peer"
+                    />
                     <div
-                      className={`w-9 h-5 rounded-full transition-colors relative ${onlyDiscount ? "" : "bg-gray-300"}`}
-                      style={onlyDiscount ? { background: WHATSAPP_GREEN } : {}}
+                      className={`w-9 h-5 rounded-full transition-colors relative peer-checked:bg-(--wa-btn) peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring ${
+                        onlyDiscount ? "" : "bg-gray-300"
+                      }`}
                     >
                       <div
                         className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${

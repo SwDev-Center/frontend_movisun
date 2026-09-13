@@ -46,14 +46,22 @@ export function EventosView({
                     {ev.live ? (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="absolute inset-0 bg-black/30" />
-                        <div className="relative flex flex-col items-center gap-2">
+                        {/* Overlay con icono de play: enlace real al stream para
+                            que también sea operable con teclado (no un simple div). */}
+                        <a
+                          href={ev.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Ver ${ev.title} en vivo`}
+                          className="relative flex flex-col items-center gap-2"
+                        >
                           <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
-                            <Play size={18} fill="white" className="text-white ml-0.5" />
+                            <Play size={18} fill="white" className="text-white ml-0.5" aria-hidden="true" />
                           </div>
                           <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Radio size={8} className="animate-pulse" /> EN VIVO · {ev.viewers} viendo
+                            <Radio size={8} className="animate-pulse" aria-hidden="true" /> EN VIVO · {ev.viewers} viendo
                           </span>
-                        </div>
+                        </a>
                       </div>
                     ) : (
                       <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full backdrop-blur flex items-center gap-1">
@@ -96,8 +104,8 @@ export function EventosView({
         <Reveal>
           <RevealItem>
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-bold bg-amber-500">
-                <Flash size={12} /> VENTAS FLASH
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-amber-950 text-xs font-bold bg-amber-500">
+                <Flash size={12} aria-hidden="true" /> VENTAS FLASH
               </div>
               <h2 className="text-2xl font-extrabold text-foreground">Ofertas relámpago</h2>
             </div>
@@ -110,10 +118,24 @@ export function EventosView({
               return (
                 <RevealItem key={flash.productId}>
                   <motion.div className="bg-white rounded-2xl border-2 border-amber-400 shadow-md overflow-hidden relative h-full flex flex-col">
-                    <div className="absolute top-3 right-3 z-10 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <div className="absolute top-3 right-3 z-10 bg-amber-500 text-amber-950 text-xs font-bold px-2 py-0.5 rounded-full">
                       -{flash.extraDiscount}% EXTRA
                     </div>
-                    <div className="relative aspect-square overflow-hidden bg-muted cursor-pointer shrink-0" onClick={() => openProduct(product)}>
+                    {/* Imagen del producto: operable por teclado (Enter/Espacio)
+                        igual que el resto de tarjetas del catálogo. */}
+                    <div
+                      className="relative aspect-square overflow-hidden bg-muted cursor-pointer shrink-0"
+                      onClick={() => openProduct(product)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openProduct(product);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ver ${product.name}`}
+                    >
                       <ProductImage src={product.image} alt={product.name} fill className="object-cover hover:scale-105 transition-transform duration-500" />
                     </div>
                     <div className="p-4 flex flex-col flex-1">
@@ -131,7 +153,9 @@ export function EventosView({
                       </div>
                       <button
                         onClick={() => addToCart({ ...product, price: flashPrice })}
-                        className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 transition-colors"
+                        // Texto oscuro sobre ámbar: el blanco sobre amber-500
+                        // solo alcanza 2.15:1, por debajo del mínimo AA.
+                        className="w-full py-2.5 rounded-xl text-xs font-bold text-amber-950 bg-amber-500 hover:bg-amber-400 transition-colors"
                       >
                         Agregar al carrito
                       </button>
