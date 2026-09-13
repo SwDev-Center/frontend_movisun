@@ -16,8 +16,10 @@ export default async function HomePage() {
     getAdvisors(),
   ]);
 
+  // El <main> lo provee el root layout (id="main"); aquí solo se listan
+  // las secciones de la home para evitar landmarks anidados.
   return (
-    <main>
+    <>
       <Hero />
       <ImageCarousel />
       <CategoryCardsSection categories={categories} />
@@ -25,6 +27,6 @@ export default async function HomePage() {
       <BrandVideoSection advisors={advisors} />
       <FeaturesSection />
       <CtaSection advisors={advisors} />
-    </main>
+    </>
   );
 }

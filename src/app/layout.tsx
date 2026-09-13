@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { MotionConfig } from "motion/react";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { ShopProvider } from "@/context/ShopContext";
 import { getAdvisors } from "@/api/advisors";
+import { AppShell } from "@/components/layout/AppShell";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Overlays } from "@/components/layout/Overlays";
@@ -94,14 +96,28 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es-CO" className={plusJakartaSans.variable}>
       <body className="min-h-screen bg-background antialiased">
+        {/* Enlace de salto: primero del body para que el usuario de teclado
+            pueda ir directo al contenido principal (#main). */}
+        <a href="#main" className="skip-link">
+          Saltar al contenido principal
+        </a>
         {/* Esquemas globales de la marca: aparecen en todas las páginas. */}
         <JsonLd data={[orgSchema, websiteSchema]} />
         <CartProvider>
           <ShopProvider>
-            <Header advisors={advisors} />
-            {children}
-            <Footer advisors={advisors} />
-            <Overlays advisors={advisors} />
+            {/* reducedMotion="user" hace que motion/react desactive las
+                animaciones de transform/opación cuando el usuario prefiere
+                "reducir movimiento" (prefers-reduced-motion). */}
+            <MotionConfig reducedMotion="user">
+              <AppShell>
+                <Header advisors={advisors} />
+                <main id="main" tabIndex={-1} className="flex-1">
+                  {children}
+                </main>
+                <Footer advisors={advisors} />
+              </AppShell>
+              <Overlays advisors={advisors} />
+            </MotionConfig>
           </ShopProvider>
         </CartProvider>
       </body>

@@ -23,7 +23,8 @@ export function CtaSection({ advisors }: { advisors: Advisor[] }) {
               href={`https://wa.me/${a.wa}?text=${encodeURIComponent(`Hola! Soy ${a.label} de Movisun Nariño. ¿En qué te puedo ayudar?`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2.5 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-3.5 px-7 rounded-2xl transition-colors text-sm"
+              // Verde oscuro (--wa-btn, 5.0:1 con blanco) para cumplir AA.
+              className="flex items-center gap-2.5 bg-(--wa-btn) hover:bg-(--wa-btn-hover) text-white font-bold py-3.5 px-7 rounded-2xl transition-colors text-sm"
             >
               <WaIcon size={17} /> {a.label}: +57 {a.phone}
             </a>

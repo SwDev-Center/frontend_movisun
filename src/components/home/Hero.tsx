@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Play } from "lucide-react";
 import { HERO_BG, EASE } from "@/lib/constants";
 import { useShop } from "@/context/ShopContext";
@@ -10,6 +10,8 @@ import { IMG } from "@/assets/images";
 
 export function Hero() {
   const { openVideo } = useShop();
+  // Sin animaciones de flotación ni pulso para quien prefiere menos movimiento.
+  const reduceMotion = useReducedMotion();
 
   const floaters = [
     { img: IMG.heroWatch, alt: "Smartwatch", cls: "top-[12%] left-[9%]", delay: 0.4, size: "w-[250px] h-[250px]", dur: 5.6 },
@@ -42,6 +44,7 @@ export function Hero() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.95, delay: f.delay, ease: EASE }}
         >
+          {!reduceMotion && (
           <motion.div animate={{ y: [0, -18, 0] }} transition={{ duration: f.dur, repeat: Infinity, ease: "easeInOut", delay: (f.delay - 0.3) * 3 }}>
             <div className="relative">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130%] h-[130%] rounded-full blur-3xl opacity-[0.22] pointer-events-none bg-white" />
@@ -57,6 +60,7 @@ export function Hero() {
               </div>
             </div>
           </motion.div>
+          )}
         </motion.div>
       ))}
 
@@ -66,7 +70,7 @@ export function Hero() {
             <ProductImage src={IMG.movisunLogo} alt="Movisun" fill className="object-contain" />
           </div>
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse motion-reduce:animate-none" />
             <span className="text-blue-200 text-xs font-semibold tracking-[0.25em] uppercase">Movisun Nariño</span>
           </div>
         </motion.div>
@@ -120,10 +124,12 @@ export function Hero() {
         transition={{ delay: 1.2, duration: 0.8 }}
         className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
       >
-        <p className="text-blue-300/35 text-[10px] tracking-[0.25em] uppercase">Desliza</p>
+        <p className="text-blue-300/60 text-[10px] tracking-[0.25em] uppercase">Desliza</p>
+        {!reduceMotion && (
         <motion.div animate={{ y: [0, 7, 0] }} transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }} className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center pt-1.5">
           <div className="w-1 h-2 bg-white/40 rounded-full" />
         </motion.div>
+        )}
       </motion.div>
     </section>
   );

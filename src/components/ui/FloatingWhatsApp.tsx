@@ -16,7 +16,10 @@ export function FloatingWhatsApp({ advisors }: { advisors: Advisor[] }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white px-4 py-3 rounded-2xl shadow-2xl transition-all hover:scale-105"
+      // Nombre accesible siempre presente: en móvil solo se ve el icono
+      // (que es aria-hidden), por eso el aria-label gobierna el anuncio.
+      aria-label={count > 0 ? `Enviar pedido por WhatsApp (${count} productos)` : "Contactar por WhatsApp"}
+      className="fixed bottom-5 right-5 z-50 flex items-center gap-2 bg-(--wa-btn) hover:bg-(--wa-btn-hover) text-white px-4 py-3 rounded-2xl shadow-2xl transition-all hover:scale-105"
     >
       <WaIcon size={19} />
       <span className="text-sm font-bold hidden sm:block">{count > 0 ? "Enviar pedido" : "WhatsApp"}</span>
@@ -26,7 +29,7 @@ export function FloatingWhatsApp({ advisors }: { advisors: Advisor[] }) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
-            className="bg-white text-[#25D366] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
+            className="bg-white text-(--wa-btn) text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"
           >
             {count}
           </motion.span>

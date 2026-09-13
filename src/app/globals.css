@@ -12,7 +12,9 @@
   --secondary: #f0f4fc;
   --secondary-foreground: #1e3a72;
   --muted: #f5f7fc;
-  --muted-foreground: #7585a4;
+  /* #5b6b8c (≈4.9:1 sobre blanco / 4.7:1 sobre el fondo muted) cumple
+     WCAG AA para texto normal; el valor anterior #7585a4 (3.7:1) fallaba. */
+  --muted-foreground: #5b6b8c;
   --accent: #1e3a72;
   --accent-foreground: #ffffff;
   --destructive: #c8102e;
@@ -21,6 +23,11 @@
   --input: rgba(26, 47, 95, 0.1);
   --ring: #1a2f5f;
   --radius: 0.625rem;
+  /* Verde de los botones de WhatsApp: #15803D da 5.0:1 con texto blanco
+     (AA), a diferencia del verde de marca #25D366 (1.98:1). Se consume en
+     CSS con la sintaxis bg-(--wa-btn) / hover:bg-(--wa-btn-hover). */
+  --wa-btn: #15803d;
+  --wa-btn-hover: #116a33;
 }
 
 @theme inline {
@@ -58,9 +65,54 @@
   }
   html {
     scroll-behavior: smooth;
+    /* Evita que el header fijo (h-14 = 3.5rem) tape el elemento al
+       navegar a anclas o con el skip link (#main). */
+    scroll-padding-top: 5.5rem;
   }
   body {
     background: var(--background);
     color: var(--foreground);
   }
+  /* Anillo de foco visible solo para navegación por teclado (2.4.7).
+     Los inputs con outline-none no pierden su indicador gracias a esto. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Respeto a "reducir movimiento" del sistema: desactiva animaciones CSS
+   y el scroll suave cuando el usuario lo pide (WCAG 2.3.3 / preferencia OS). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip link: oculto visualmente pero presente para ir directo al <main>
+   con el teclado (bypass de bloques repetitivos, WCAG 2.4.1). */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 100;
+  background: var(--foreground);
+  color: var(--background);
+  padding: 0.625rem 1rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
+}
+
+.skip-link:focus {
+  top: 1rem;
 }
