@@ -59,7 +59,13 @@ export interface LiveEvent {
   id: number;
   title: string;
   desc: string;
+  /** Display string, e.g. "Hoy, 7:00 PM". */
   date: string;
+  /** Fecha de inicio en ISO 8601 (p. ej. 2026-09-13T19:00:00-05:00).
+   *  Se usa únicamente para el esquema Event (JSON-LD), no para el UI. */
+  startsAt: string;
+  /** Enlace externo donde se emite el stream; la página redirige a él. */
+  url: string;
   live: boolean;
   image: string;
   viewers: number;

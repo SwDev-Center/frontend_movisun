@@ -33,7 +33,8 @@ export function EventosView({
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-bold" style={{ background: "#dc2626" }}>
                 <Radio size={12} className="animate-pulse" /> EN VIVO
               </div>
-              <h2 className="text-2xl font-extrabold text-foreground">Eventos en Vivo</h2>
+              {/* Reemplazó al h2: es el encabezado principal de la página de eventos. */}
+          <h1 className="text-2xl font-extrabold text-foreground">Eventos en Vivo</h1>
             </div>
           </RevealItem>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -63,8 +64,10 @@ export function EventosView({
                   <div className="p-4">
                     <h3 className="font-bold text-foreground text-sm mb-1 leading-tight">{ev.title}</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">{ev.desc}</p>
+                    {/* Si el evento está en vivo se enlaza al stream externo (ev.url);
+                        si es próximo, se agenda por WhatsApp (wa). */}
                     <a
-                      href={wa}
+                      href={ev.live ? ev.url : wa}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-xs font-bold text-white transition-colors ${
