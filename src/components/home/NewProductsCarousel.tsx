@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion, type Variants } from "motion/react";
+import { motion, type Variants } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PRIMARY, EASE } from "@/lib/constants";
 import type { Product } from "@/lib/types";
 import { ProductCard } from "@/components/ui/ProductCard";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 44 },
@@ -17,7 +18,7 @@ export function NewProductsCarousel({ products }: { products: Product[] }) {
   const [paused, setPaused] = useState(false);
   const visible = 2;
   // Con "reducir movimiento" no se avanza automáticamente (WCAG 2.2.2).
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (paused || reduceMotion || products.length <= visible) return;

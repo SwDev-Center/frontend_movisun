@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, type Variants, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { motion, type Variants } from "motion/react";
 import { VolumeX, Volume2, Pause, Play } from "lucide-react";
 import { BRAND_VIDEO_ID } from "@/lib/constants";
 import { EASE } from "@/lib/constants";
 import { waGeneralUrl } from "@/lib/utils";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import type { Advisor } from "@/lib/types";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { WaIcon } from "@/components/ui/WaIcon";
@@ -21,9 +22,11 @@ const stagger: Variants = {
 };
 
 export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
-  // Con "reducir movimiento" el video arranca pausado (2.2.2/2.3.3).
-  const reduceMotion = useReducedMotion();
-  const [playing, setPlaying] = useState(() => !reduceMotion);
+  // Con "reducir movimiento" se pausa el video tras el montaje (2.2.2/2.3.3).
+  // El valor se lee en un efecto: el primer render es idéntico en el servidor y
+  // en el cliente para no romper la hidratación (useReducedMotion de framer no).
+  const reduceMotion = usePrefersReducedMotion();
+  const [playing, setPlaying] = useState(true);
   const [soundOn, setSoundOn] = useState(false);
   const wa = waGeneralUrl(advisors[0]?.wa ?? "");
 
@@ -37,6 +40,16 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
     );
   };
 
+  // Pausar vía JSAPI (sin cambiar el src, para no recargar el embed) cuando el
+  // usuario prefiere menos movimiento. El cambio de UI se aplaza un frame para
+  // no llamar a setState de forma síncrona dentro del efecto.
+  useEffect(() => {
+    if (!reduceMotion) return;
+    sendCommand("pauseVideo");
+    const raf = requestAnimationFrame(() => setPlaying(false));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
+
   const togglePlay = () => {
     if (playing) sendCommand("pauseVideo");
     else sendCommand("playVideo");
@@ -49,7 +62,8 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
     setSoundOn((s) => !s);
   };
 
-  const autoplay = reduceMotion ? 0 : 1;
+  // Autoplay fijo para que el `src` sea idéntico en servidor y cliente.
+  const autoplay = 1;
 
   return (
     <section className="relative overflow-hidden" style={{ height: "min(520px, 90vw)", background: "#07111f" }}>
@@ -62,6 +76,7 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
           title="Video corporativo de fondo Movisun"
           allow="autoplay; encrypted-media"
           tabIndex={-1}
+          onLoad={() => reduceMotion && sendCommand("pauseVideo")}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{ width: "200%", height: "200%", border: "none", pointerEvents: "none" }}
         />
