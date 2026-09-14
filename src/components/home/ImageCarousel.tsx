@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { EASE } from "@/lib/constants";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { IMG } from "@/assets/images";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const SLIDES = [
   {
@@ -46,7 +47,7 @@ export function ImageCarousel() {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   // Si el usuario prefiere menos movimiento no se avanza solo (WCAG 2.2.2).
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
   const advance = useCallback(
     (dir: 1 | -1) => setIdx((i) => (i + dir + SLIDES.length) % SLIDES.length),
     []

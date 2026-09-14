@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingCart,
   X,
-  Search,
   Menu,
   ChevronDown,
   ChevronRight,
@@ -42,18 +41,12 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchVal, setSearchVal] = useState("");
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
   const [prevPathname, setPrevPathname] = useState(pathname);
 
   const onHome = pathname === "/";
   const transparent = !scrolled && !mobileOpen && onHome;
 
-  useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
-  }, [searchOpen]);
 
   // Reset transient UI when the route changes (derived-state pattern).
   if (prevPathname !== pathname) {
@@ -163,53 +156,8 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
           })}
         </nav>
 
-        {/* Right: search + cart + hamburger */}
+        {/* cart + hamburger */}
         <div className="flex items-center gap-1.5 ml-auto">
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.div
-                id="desktop-search-panel"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 200, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="hidden md:flex overflow-hidden"
-              >
-                <div className={`flex items-center gap-2 rounded-xl px-3 py-2 w-full ${transparent ? "bg-white/15 border border-white/20" : "bg-muted border border-border"}`}>
-                  <Search size={13} className={transparent ? "text-blue-200" : "text-muted-foreground"} aria-hidden="true" />
-                  <input
-                    ref={searchRef}
-                    type="search"
-                    aria-label="Buscar"
-                    placeholder="Buscar..."
-                    value={searchVal}
-                    onChange={(e) => setSearchVal(e.target.value)}
-                    className={`bg-transparent text-sm flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 ${
-                      transparent
-                        ? "text-white placeholder:text-blue-200 focus-visible:outline-white"
-                        : "text-foreground placeholder:text-muted-foreground focus-visible:outline-ring"
-                    }`}
-                  />
-                  {searchVal && (
-                    <button onClick={() => setSearchVal("")} aria-label="Limpiar búsqueda" className="hover:opacity-75 transition-opacity">
-                      <X size={12} aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <button
-            onClick={() => setSearchOpen((s) => !s)}
-            aria-expanded={searchOpen}
-            aria-controls="desktop-search-panel"
-            className={`hidden md:flex w-9 h-9 items-center justify-center rounded-xl transition-all ${
-              transparent ? "text-white hover:bg-white/15" : "text-muted-foreground hover:bg-muted"
-            }`}
-            aria-label="Buscar"
-          >
-            {searchOpen ? <X size={17} aria-hidden="true" /> : <Search size={17} aria-hidden="true" />}
-          </button>
           <button
             onClick={openCart}
             className={`relative flex items-center justify-center w-9 h-9 rounded-xl transition-all ${
@@ -262,17 +210,7 @@ export function Header({ advisors }: { advisors: Advisor[] }) {
             }}
             className="lg:hidden bg-white border-t border-border overflow-hidden"
           >
-            <div className="px-4 pt-3 pb-1">
-              <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-2.5 border border-border mb-2">
-                <Search size={14} className="text-muted-foreground" aria-hidden="true" />
-                <input
-                  type="search"
-                  aria-label="Buscar"
-                  placeholder="Buscar productos..."
-                  className="bg-transparent text-sm flex-1 text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                />
-              </div>
-            </div>
+            
             <div className="px-4 pb-2 flex gap-3">
               {advisors.map((a) => (
                 <a key={a.wa} href={`tel:+57${a.phone}`} className="flex items-center gap-1 text-xs font-medium" style={{ color: PRIMARY }}>
