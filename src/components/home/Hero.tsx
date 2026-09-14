@@ -1,23 +1,78 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { ArrowRight, Play } from "lucide-react";
 import { HERO_BG, EASE } from "@/lib/constants";
 import { useShop } from "@/context/ShopContext";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { IMG } from "@/assets/images";
 
 export function Hero() {
   const { openVideo } = useShop();
   // Sin animaciones de flotación ni pulso para quien prefiere menos movimiento.
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
 
+  // Los 4 productos del hero en sus esquinas (solo escritorio ≥1280px),
+  // replicando la posición, brillos, sombras y ritmos del mockup de Figma.
   const floaters = [
-    { img: IMG.heroWatch, alt: "Smartwatch", cls: "top-[12%] left-[9%]", delay: 0.4, size: "w-[250px] h-[250px]", dur: 5.6 },
-    { img: IMG.heroHeadphones, alt: "Diadema", cls: "bottom-[9%] left-[11%]", delay: 0.65, size: "w-[235px] h-[235px]", dur: 4.9 },
-    { img: IMG.heroSpeaker, alt: "Parlante", cls: "top-[10%] right-[9%]", delay: 0.52, size: "w-[255px] h-[255px]", dur: 5.2 },
-    { img: IMG.heroEarbuds, alt: "Earbuds", cls: "bottom-[10%] right-[11%]", delay: 0.78, size: "w-[230px] h-[230px]", dur: 4.5 },
+    {
+      img: IMG.heroWatch,
+      alt: "Smartwatch",
+      cls: "top-[12%] left-[9%]",
+      fromX: -55,
+      enterDelay: 0.4,
+      dur: 5.6,
+      bobDelay: 0,
+      amp: 20,
+      size: "w-[250px] h-[250px]",
+      glowOuter: "w-[270px] h-[270px]",
+      glowInner: "w-[130px] h-[130px]",
+      shadow: "rgba(180,210,255,0.22)",
+    },
+    {
+      img: IMG.heroHeadphones,
+      alt: "Diadema",
+      cls: "bottom-[9%] left-[11%]",
+      fromX: -55,
+      enterDelay: 0.65,
+      dur: 4.9,
+      bobDelay: 1.6,
+      amp: 18,
+      size: "w-[235px] h-[235px]",
+      glowOuter: "w-[250px] h-[250px]",
+      glowInner: "w-[120px] h-[120px]",
+      shadow: "rgba(255,255,255,0.10)",
+    },
+    {
+      img: IMG.heroSpeaker,
+      alt: "Parlante",
+      cls: "top-[10%] right-[9%]",
+      fromX: 55,
+      enterDelay: 0.52,
+      dur: 5.2,
+      bobDelay: 0.7,
+      amp: 22,
+      size: "w-[255px] h-[255px]",
+      glowOuter: "w-[280px] h-[210px]",
+      glowInner: "w-[130px] h-[95px]",
+      shadow: "rgba(255,255,255,0.10)",
+    },
+    {
+      img: IMG.heroEarbuds,
+      alt: "Earbuds",
+      cls: "bottom-[10%] right-[11%]",
+      fromX: 55,
+      enterDelay: 0.78,
+      dur: 4.5,
+      bobDelay: 1.0,
+      amp: 16,
+      size: "w-[230px] h-[230px]",
+      glowOuter: "w-[250px] h-[250px]",
+      glowInner: "w-[120px] h-[120px]",
+      shadow: "rgba(255,255,255,0.10)",
+    },
   ];
 
   return (
@@ -38,29 +93,33 @@ export function Hero() {
       {floaters.map((f) => (
         <motion.div
           key={f.alt}
-          className={`hidden lg:block absolute ${f.cls}`}
+          className={`hidden xl:block absolute ${f.cls}`}
           style={{ zIndex: 2 }}
-          initial={{ opacity: 0, x: f.cls.includes("left") ? -55 : 55 }}
+          initial={{ opacity: 0, x: f.fromX }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.95, delay: f.delay, ease: EASE }}
+          transition={{ duration: 0.95, delay: f.enterDelay, ease: EASE }}
         >
-          {!reduceMotion && (
-          <motion.div animate={{ y: [0, -18, 0] }} transition={{ duration: f.dur, repeat: Infinity, ease: "easeInOut", delay: (f.delay - 0.3) * 3 }}>
+          {/* Con "reducir movimiento" el producto se muestra estático (2.3.3):
+              la imagen siempre es visible, solo se desactiva la flotación. */}
+          <motion.div
+            animate={reduceMotion ? { y: 0 } : { y: [0, -f.amp, 0] }}
+            transition={reduceMotion ? { duration: 0 } : { duration: f.dur, repeat: Infinity, ease: "easeInOut", delay: f.bobDelay }}
+          >
             <div className="relative">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130%] h-[130%] rounded-full blur-3xl opacity-[0.22] pointer-events-none bg-white" />
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl opacity-[0.22] pointer-events-none bg-white ${f.glowOuter}`} />
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl opacity-[0.18] pointer-events-none bg-white ${f.glowInner}`} />
               <div className={`relative ${f.size}`}>
                 <ProductImage
                   src={f.img}
                   alt={f.alt}
                   fill
                   className="object-contain"
-                  style={{ filter: "drop-shadow(0 8px 32px rgba(180,210,255,0.22))" }}
+                  style={{ filter: `drop-shadow(0 8px 32px ${f.shadow})` }}
                   priority
                 />
               </div>
             </div>
           </motion.div>
-          )}
         </motion.div>
       ))}
 
