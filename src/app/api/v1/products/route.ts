@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { products } from "@/lib/data/products.mock";
+import { findProducts } from "@/lib/repo";
 
-// Mock API. Simulates network latency so loading.tsx / skeletons actually render.
-// Delete this folder once the real API is available and set API_BASE_URL.
+// Catálogo completo. La forma de la respuesta es la que declara Product en
+// src/lib/types.ts; el filtrado por categoría, novedad y oferta sigue ocurriendo
+// en src/api/products.ts, así que ninguna página cambió.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  await new Promise((r) => setTimeout(r, 200));
+  const products = await findProducts();
   return NextResponse.json(products);
 }

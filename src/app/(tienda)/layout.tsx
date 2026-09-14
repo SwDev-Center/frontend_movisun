@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { MotionConfig } from "motion/react";
-import "./globals.css";
+import "../globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { ShopProvider } from "@/context/ShopContext";
 import { getAdvisors } from "@/api/advisors";
+import { getCategories } from "@/api/categories";
+import { construirNav } from "@/lib/nav";
 import { AppShell } from "@/components/layout/AppShell";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -59,12 +61,14 @@ export const viewport: Viewport = {
   themeColor: "#1A2F5F",
 };
 
-// El layout consulta la API en cada petición (getAdvisors), así que todas
-// las páginas se renderizan bajo demanda en el servidor.
+// El layout consulta la API en cada petición (asesores y categorías), así que
+// todas las páginas se renderizan bajo demanda en el servidor. Las categorías
+// son las que arman el menú del header y las columnas del pie de página.
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const advisors = await getAdvisors();
+  const [advisors, categories] = await Promise.all([getAdvisors(), getCategories()]);
+  const navItems = construirNav(categories);
 
   const orgSchema = {
     "@context": "https://schema.org",
@@ -110,11 +114,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 "reducir movimiento" (prefers-reduced-motion). */}
             <MotionConfig reducedMotion="user">
               <AppShell>
-                <Header advisors={advisors} />
+                <Header advisors={advisors} navItems={navItems} />
                 <main id="main" tabIndex={-1} className="flex-1">
                   {children}
                 </main>
-                <Footer advisors={advisors} />
+                <Footer advisors={advisors} categories={categories} />
               </AppShell>
               <Overlays advisors={advisors} />
             </MotionConfig>

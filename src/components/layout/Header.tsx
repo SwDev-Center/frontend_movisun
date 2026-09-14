@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Phone,
 } from "lucide-react";
-import { navItems } from "@/lib/data/nav.mock";
 import type { NavItem, Advisor } from "@/lib/types";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 import { useCart } from "@/context/CartContext";
@@ -33,7 +32,9 @@ function isChildActive(pathname: string, item: NavItem): boolean {
   return (item.children ?? []).some((c) => isNavActive(pathname, { id: item.id, label: c.label, href: c.href }));
 }
 
-export function Header({ advisors }: { advisors: Advisor[] }) {
+// El menú llega como prop desde (tienda)/layout.tsx: se arma con las categorías
+// de la base, así que crear una categoría en el panel la hace aparecer acá.
+export function Header({ advisors, navItems }: { advisors: Advisor[]; navItems: NavItem[] }) {
   const pathname = usePathname();
   const scrolled = useHeaderScroll(60);
   const { count } = useCart();

@@ -23,13 +23,16 @@ export class ApiError extends Error {
 interface HttpOptions {
   revalidate?: number;
   signal?: AbortSignal;
+  /** Etiquetas de caché: el panel las invalida con revalidateTag() al guardar,
+   *  para que un cambio se vea en el sitio sin esperar al revalidate. */
+  tags?: string[];
 }
 
 /** GET + parse JSON. Server-side by default (pages are Server Components). */
 export async function httpGet<T>(path: string, opts: HttpOptions = {}): Promise<T> {
-  const { revalidate = 60, signal } = opts;
+  const { revalidate = 60, signal, tags } = opts;
   const res = await fetch(`${API_BASE_URL}${path}`, {
-    next: { revalidate },
+    next: { revalidate, tags },
     signal,
   });
   if (!res.ok) throw new ApiError(res.status, path);

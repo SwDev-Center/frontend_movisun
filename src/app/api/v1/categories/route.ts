@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { categories } from "@/lib/data/categories.mock";
+import { findCategories } from "@/lib/repo";
 
+// Categorías con sus subcategorías. Son también los "módulos" del header que
+// se administran desde el panel.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  await new Promise((r) => setTimeout(r, 150));
+  const categories = await findCategories();
   return NextResponse.json(categories);
 }

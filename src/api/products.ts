@@ -2,7 +2,7 @@ import { httpGet } from "@/api/http";
 import type { Product } from "@/lib/types";
 
 export async function getProducts(): Promise<Product[]> {
-  return httpGet<Product[]>("/api/v1/products", { revalidate: 120 });
+  return httpGet<Product[]>("/api/v1/products", { revalidate: 120, tags: ["products"] });
 }
 
 export async function getProductById(id: number): Promise<Product | null> {

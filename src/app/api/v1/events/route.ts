@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { events } from "@/lib/data/events.mock";
+import { findEvents } from "@/lib/repo";
 
+// Eventos en vivo y ofertas relámpago. Único endpoint que devuelve un objeto
+// con dos colecciones en lugar de un arreglo.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  await new Promise((r) => setTimeout(r, 150));
+  const events = await findEvents();
   return NextResponse.json(events);
 }

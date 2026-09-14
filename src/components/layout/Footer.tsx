@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { Phone } from "lucide-react";
-import { navItems } from "@/lib/data/nav.mock";
-import { categories } from "@/lib/data/categories.mock";
-import type { Advisor } from "@/lib/types";
+import { NAV_FIJOS } from "@/lib/nav";
+import type { Advisor, Category } from "@/lib/types";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { IMG } from "@/assets/images";
 
-export function Footer({ advisors }: { advisors: Advisor[] }) {
+export function Footer({ advisors, categories }: { advisors: Advisor[]; categories: Category[] }) {
   return (
     <footer className="py-10 px-4" style={{ background: "#07111f" }}>
       <div className="max-w-5xl mx-auto">
@@ -45,13 +44,11 @@ export function Footer({ advisors }: { advisors: Advisor[] }) {
             ))}
             <div>
               <p className="text-white text-xs font-bold mb-2">Movisun</p>
-              {navItems
-                .filter((i) => i.href && !i.href.startsWith("/catalogo"))
-                .map((i) => (
-                  <Link key={i.id} href={i.href!} className="flex items-center min-h-[24px] text-blue-400 hover:text-blue-200 text-xs transition-colors">
-                    {i.label}
-                  </Link>
-                ))}
+              {NAV_FIJOS.map((i) => (
+                <Link key={i.id} href={i.href!} className="flex items-center min-h-[24px] text-blue-400 hover:text-blue-200 text-xs transition-colors">
+                  {i.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
