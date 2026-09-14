@@ -42,6 +42,14 @@ const stagger: Variants = {
 
 export function CatalogView({ category, products, initialSub = null }: { category: Category; products: Product[]; initialSub?: string | null }) {
   const [activeSub, setActiveSub] = useState<string | null>(initialSub);
+  const [prevInitialSub, setPrevInitialSub] = useState<string | null>(initialSub);
+  // Navegación del navbar a otra subcategoría de la misma ruta (solo cambia el
+  // ?sub): en navegaciones suaves React conserva el estado, así que se resincroniza
+  // `activeSub` con el prop mediante derived state (patrón prevPathname de Header).
+  if (prevInitialSub !== initialSub) {
+    setPrevInitialSub(initialSub);
+    setActiveSub(initialSub);
+  }
   const [sortBy, setSortBy] = useState<SortKey>("nuevos");
   const [priceRange, setPriceRange] = useState<PriceRange>("all");
   const [minRating, setMinRating] = useState(0);
