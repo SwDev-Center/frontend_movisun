@@ -45,6 +45,7 @@ Van en `.env.local`, que **no se versiona**. `.env.example` documenta cada una.
 | `ADMIN_PASSWORD` | Contraseña única de acceso a `/admin`. No hay tabla de usuarios. |
 | `ADMIN_SESSION_SECRET` | Secreto para firmar la cookie de sesión. Generalo con `openssl rand -hex 32`. |
 | `NEXT_PUBLIC_SITE_URL` | URL pública del sitio. Alimenta el sitemap, las URL canónicas y Open Graph. |
+| `WHATSAPP_VENTAS` | Celular que **recibe los pedidos** del carrito y el del botón flotante. 10 dígitos; se acepta `3201234567`, `+57 320 123 4567` o `573201234567`. |
 
 > **Nunca** le pongas el prefijo `NEXT_PUBLIC_` a un secreto: con ese prefijo
 > Next lo incrusta en el JavaScript que se descarga el navegador.
@@ -84,13 +85,28 @@ lo explica y no borra nada. La dirección de una categoría (`/catalogo/algo`) s
 genera al crearla y no cambia si después la renombrás, para no romper enlaces
 que alguien ya haya compartido.
 
+- **Portada** — las cuatro imágenes que flotan en la página de inicio y las
+  diapositivas del carrusel: cuál se ve, qué dice y a dónde lleva cada una. Las
+  dos tienen previsualización antes de guardar, y reglas distintas: las
+  flotantes son recortes **con fondo transparente** (PNG, WebP o AVIF; el JPG se
+  rechaza) y las del carrusel son fotos **apaisadas de al menos 1200 px** de
+  ancho, donde el JPG es lo adecuado.
 - **Eventos y ofertas relámpago** — programar eventos en vivo y ofertas por
   tiempo limitado. El cartel rojo EN VIVO se enciende y se apaga solo según la
   hora de inicio y la duración que cargues, y las ofertas vencidas desaparecen
   del sitio sin que tengas que hacer nada.
 
-Lo único que todavía no se administra desde el panel son los asesores de
-WhatsApp, que siguen fijos en el código.
+Lo único que no se administra desde el panel es el número de WhatsApp: va en
+`.env.local` (`WHATSAPP_VENTAS`). Está ahí a propósito — por ese número entra
+cada pedido, así que no conviene que se pueda cambiar desde una pantalla web.
+
+### Secciones apagadas
+
+`src/lib/features.ts` tiene los interruptores de las secciones públicas. Hoy
+**`MOSTRAR_EVENTOS` está en `false`**: la página `/eventos` responde «no
+encontrada» y no aparece ni en el menú ni en el sitemap. El panel de Eventos
+sigue funcionando, porque de ahí salen las ofertas relámpago, que sí se ven en
+el catálogo y en Promociones. Para volver a publicarla, poné `true`.
 
 ## Cómo está armado
 

@@ -106,3 +106,48 @@ create table if not exists flash_sales (
   ends_at        timestamptz not null,
   stock          integer not null check (stock >= 0)
 );
+
+-- ─── Piezas flotantes del hero (portada) ────────────────────────────────────
+-- Exactamente cuatro, una por esquina. Las posiciones, tamaños y animaciones
+-- están compuestas a mano en src/components/home/Hero.tsx: acá solo vive lo
+-- que se puede cambiar desde el panel.
+create table if not exists hero_tiles (
+  slot  integer primary key check (slot between 1 and 4),
+  image text not null,
+  alt   text not null,          -- lo que leen los lectores de pantalla
+  href  text not null           -- ruta interna a la que lleva el clic
+);
+
+-- Carga inicial con las imágenes que ya tenía la portada, para que el sitio se
+-- vea igual apenas se crea la tabla. `do nothing` la hace idempotente.
+insert into hero_tiles (slot, image, alt, href) values
+  (1, '/img/image-2.png', 'Smartwatch', '/catalogo/smartwatch'),
+  (2, '/img/image-3.png', 'Diadema',    '/catalogo/bluetooth'),
+  (3, '/img/image-4.png', 'Parlante',   '/catalogo/bluetooth'),
+  (4, '/img/image-5.png', 'Audífonos',  '/catalogo/audio')
+on conflict (slot) do nothing;
+
+-- ─── Diapositivas del carrusel de la portada ────────────────────────────────
+-- A diferencia del hero, acá la cantidad es libre: el carrusel y sus puntos se
+-- adaptan a las que haya. Con cero diapositivas la sección no se dibuja.
+create table if not exists home_slides (
+  id        serial primary key,
+  image     text not null,            -- foto apaisada, se recorta a lo ancho
+  headline  text not null,
+  sub       text not null,
+  cta_label text not null,            -- texto del botón
+  href      text not null,            -- ruta interna a la que lleva
+  position  integer not null default 0
+);
+
+-- Carga inicial con las cinco diapositivas que ya tenía la portada. Solo corre
+-- si la tabla está vacía, así no duplica nada al reaplicar el esquema.
+insert into home_slides (image, headline, sub, cta_label, href, position)
+select * from (values
+  ('/img/unsplash-watch.jpg',    'Smartwatches de última generación',   'Monitorea tu salud y mantente conectado todo el día.', 'Ver categoría', '/catalogo/smartwatch', 0),
+  ('/img/unsplash-tws.jpg',      'Audífonos TWS con cancelación de ruido', 'Sonido inmersivo para cada momento de tu día.',    'Ver categoría', '/catalogo/audio',      1),
+  ('/img/unsplash-charging.jpg', 'Carga rápida donde vayas',            'Power banks y cargadores GaN compactos y potentes.',  'Ver categoría', '/catalogo/audio',      2),
+  ('/img/unsplash-speakers.jpg', 'Parlantes Bluetooth 360°',            'Lleva la música a cualquier lugar. IPX7 resistente.', 'Ver categoría', '/catalogo/bluetooth',  3),
+  ('/img/unsplash-gaming.jpg',   'Diademas Gaming Premium',             'Sonido 7.1, micrófono ANC y RGB personalizable.',     'Ver categoría', '/catalogo/bluetooth',  4)
+) as inicial
+where not exists (select 1 from home_slides);

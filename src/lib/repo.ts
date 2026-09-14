@@ -9,7 +9,7 @@ import {
   type LiveEventRow,
   type ProductRow,
 } from "@/lib/mappers";
-import type { Category, EventsCatalog, Product } from "@/lib/types";
+import type { Category, EventsCatalog, HeroTile, HomeSlide, Product } from "@/lib/types";
 
 // Lecturas de la base de datos. Es la única capa que escribe SQL de consulta;
 // los route handlers de src/app/api/v1 solo llaman a estas funciones.
@@ -31,9 +31,15 @@ export async function findProducts(): Promise<Product[]> {
            p.reviews,
            p.colors,
            p.is_new,
-           p.created_at
+           p.created_at,
+           -- Solo las ofertas vigentes: una vencida no debe rebajar el precio
+           -- en el catálogo, igual que no se muestra en /eventos.
+           f.extra_discount as flash_extra_discount,
+           f.ends_at        as flash_ends_at,
+           f.stock          as flash_stock
       from products p
       join subcategories s on s.id = p.subcategory_id
+      left join flash_sales f on f.product_id = p.id and f.ends_at > now()
      order by p.id
   `);
   return rows.map(toProduct);
@@ -110,4 +116,37 @@ export async function contarTodo(): Promise<Resumen> {
            (select count(*) from images)::int        as imagenes
   `);
   return fila;
+}
+
+export async function findHeroTiles(): Promise<HeroTile[]> {
+  return query<HeroTile>(`
+    select slot, image, alt, href
+      from hero_tiles
+     order by slot
+  `);
+}
+
+interface HomeSlideRow {
+  id: number;
+  image: string;
+  headline: string;
+  sub: string;
+  cta_label: string;
+  href: string;
+}
+
+export async function findHomeSlides(): Promise<HomeSlide[]> {
+  const filas = await query<HomeSlideRow>(`
+    select id, image, headline, sub, cta_label, href
+      from home_slides
+     order by position, id
+  `);
+  return filas.map((f) => ({
+    id: f.id,
+    image: f.image,
+    headline: f.headline,
+    sub: f.sub,
+    ctaLabel: f.cta_label,
+    href: f.href,
+  }));
 }

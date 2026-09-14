@@ -6,60 +6,35 @@ import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { EASE } from "@/lib/constants";
 import { ProductImage } from "@/components/ui/ProductImage";
-import { IMG } from "@/assets/images";
+import type { HomeSlide } from "@/lib/types";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
-const SLIDES = [
-  {
-    img: IMG.slideSmartwatches,
-    headline: "Smartwatches de última generación",
-    sub: "Monitorea tu salud y mantente conectado todo el día.",
-    cta: "smartwatch",
-  },
-  {
-    img: IMG.slideTws,
-    headline: "Audífonos TWS con cancelación de ruido",
-    sub: "Sonido inmersivo para cada momento de tu día.",
-    cta: "audio",
-  },
-  {
-    img: IMG.slideCharging,
-    headline: "Carga rápida donde vayas",
-    sub: "Power banks y cargadores GaN compactos y potentes.",
-    cta: "audio",
-  },
-  {
-    img: IMG.slideSpeakers,
-    headline: "Parlantes Bluetooth 360°",
-    sub: "Lleva la música a cualquier lugar. IPX7 resistente.",
-    cta: "bluetooth",
-  },
-  {
-    img: IMG.slideGaming,
-    headline: "Diademas Gaming Premium",
-    sub: "Sonido 7.1, micrófono ANC y RGB personalizable.",
-    cta: "bluetooth",
-  },
-];
-
-export function ImageCarousel() {
+// Las diapositivas se administran desde /admin/inicio. La cantidad es libre:
+// con una sola no rota ni muestra flechas, y con ninguna el carrusel no existe.
+export function ImageCarousel({ slides }: { slides: HomeSlide[] }) {
   const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   // Si el usuario prefiere menos movimiento no se avanza solo (WCAG 2.2.2).
   const reduceMotion = usePrefersReducedMotion();
+  const total = slides.length;
   const advance = useCallback(
-    (dir: 1 | -1) => setIdx((i) => (i + dir + SLIDES.length) % SLIDES.length),
-    []
+    (dir: 1 | -1) => setIdx((i) => (i + dir + total) % total),
+    [total]
   );
 
   useEffect(() => {
-    if (paused || reduceMotion) return;
+    if (paused || reduceMotion || total < 2) return;
     const t = setInterval(() => advance(1), 5000);
     return () => clearInterval(t);
-  }, [paused, reduceMotion, advance]);
+  }, [paused, reduceMotion, advance, total]);
 
-  const slide = SLIDES[idx];
+  // Sin diapositivas no se dibuja nada. Va después de los hooks, que no pueden
+  // quedar detrás de un return condicional.
+  if (total === 0) return null;
+
+  // Si se borró la última mientras estaba visible, el índice puede quedar fuera.
+  const slide = slides[Math.min(idx, total - 1)];
 
   return (
     <section
@@ -82,7 +57,7 @@ export function ImageCarousel() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.7, ease: EASE }}
         >
-          <ProductImage src={slide.img} alt={slide.headline} fill sizes="100vw" className="object-cover" priority />
+          <ProductImage src={slide.image} alt={slide.headline} fill sizes="100vw" className="object-cover" priority />
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(to right, rgba(7,17,32,0.85) 0%, rgba(26,47,95,0.6) 50%, rgba(0,0,0,0.1) 100%)" }}
@@ -103,18 +78,19 @@ export function ImageCarousel() {
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white leading-tight mb-3">{slide.headline}</h2>
             <p className="text-blue-100/80 text-sm sm:text-base mb-6 max-w-sm">{slide.sub}</p>
             <button
-              onClick={() => router.push(`/catalogo/${slide.cta}`)}
+              onClick={() => router.push(slide.href)}
               className="inline-flex items-center gap-2 bg-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors"
               style={{ color: "#1A2F5F" }}
             >
-              Ver categoría <ArrowRight size={15} aria-hidden="true" />
+              {slide.ctaLabel} <ArrowRight size={15} aria-hidden="true" />
             </button>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1">
-        {SLIDES.map((_, i) => (
+      {total > 1 && (
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1">
+          {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => setIdx(i)}
@@ -129,21 +105,26 @@ export function ImageCarousel() {
           </button>
         ))}
       </div>
+      )}
 
-      <button
-        onClick={() => advance(-1)}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/25 transition-colors hidden sm:flex"
-        aria-label="Diapositiva anterior"
-      >
-        <ChevronRight size={18} className="rotate-180" aria-hidden="true" />
-      </button>
-      <button
-        onClick={() => advance(1)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/25 transition-colors hidden sm:flex"
-        aria-label="Diapositiva siguiente"
-      >
-        <ChevronRight size={18} aria-hidden="true" />
-      </button>
+      {total > 1 && (
+        <>
+          <button
+            onClick={() => advance(-1)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/25 transition-colors hidden sm:flex"
+            aria-label="Diapositiva anterior"
+          >
+            <ChevronRight size={18} className="rotate-180" aria-hidden="true" />
+          </button>
+          <button
+            onClick={() => advance(1)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/15 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-white/25 transition-colors hidden sm:flex"
+            aria-label="Diapositiva siguiente"
+          >
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
+        </>
+      )}
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { MOSTRAR_EVENTOS } from "@/lib/features";
 import type { Category, NavItem } from "@/lib/types";
 
 // Construcción del menú del sitio.
@@ -5,10 +6,11 @@ import type { Category, NavItem } from "@/lib/types";
 // Las categorías salen de la base y se administran desde el panel; el resto
 // son páginas propias que no son categorías, así que viven en el código.
 
-/** Páginas que no son categorías. No se administran desde el panel. */
+/** Páginas que no son categorías. No se administran desde el panel.
+ *  Las que estén apagadas en src/lib/features.ts no se listan. */
 export const NAV_FIJOS: NavItem[] = [
   { id: "promociones", label: "Promociones", href: "/promociones" },
-  { id: "eventos", label: "Eventos", href: "/eventos" },
+  ...(MOSTRAR_EVENTOS ? [{ id: "eventos", label: "Eventos", href: "/eventos" }] : []),
   {
     id: "distribuidores",
     label: "Distribuidores",

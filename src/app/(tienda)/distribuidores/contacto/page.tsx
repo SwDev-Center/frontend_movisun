@@ -27,7 +27,13 @@ export default async function DistribuidoresContactoPage() {
           </RevealItem>
 
           <RevealItem>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            {/* Con un solo asesor la tarjeta se centra en vez de quedar pegada
+                a la izquierda ocupando media pantalla. */}
+            <div
+              className={`grid grid-cols-1 gap-4 mb-8 ${
+                advisors.length > 1 ? "sm:grid-cols-2" : "max-w-sm mx-auto"
+              }`}
+            >
               {advisors.map((a) => (
                 <div key={a.name} className="p-5 bg-muted rounded-2xl">
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">{a.label}</p>

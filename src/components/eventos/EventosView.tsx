@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { Radio, Clock, Play, Zap as Flash } from "lucide-react";
 import { PRIMARY, EASE } from "@/lib/constants";
-import { fmt, waGeneralUrl } from "@/lib/utils";
+import { fmt, precioConDescuento, waGeneralUrl } from "@/lib/utils";
 import type { EventsCatalog, Product, Advisor } from "@/lib/types";
 import { useShop } from "@/context/ShopContext";
 import { Countdown } from "@/components/ui/Countdown";
@@ -114,7 +114,7 @@ export function EventosView({
             {events.flash.map((flash) => {
               const product = products.find((p) => p.id === flash.productId)!;
               if (!product) return null;
-              const flashPrice = Math.round(product.price * (1 - flash.extraDiscount / 100));
+              const flashPrice = precioConDescuento(product.price, flash.extraDiscount);
               return (
                 <RevealItem key={flash.productId}>
                   <motion.div className="bg-white rounded-2xl border-2 border-amber-400 shadow-md overflow-hidden relative h-full flex flex-col">

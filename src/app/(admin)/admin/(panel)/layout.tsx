@@ -25,6 +25,12 @@ export default async function PanelLayout({ children }: { children: ReactNode })
 
           <nav aria-label="Secciones del panel" className="flex items-center gap-1">
             <Link
+              href="/admin/inicio"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              Portada
+            </Link>
+            <Link
               href="/admin/productos"
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >

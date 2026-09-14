@@ -267,3 +267,123 @@ export const esquemaOferta = z.object({
 });
 
 export type DatosOferta = z.infer<typeof esquemaOferta>;
+
+// ─── Piezas del hero (portada) ──────────────────────────────────────────────
+
+/**
+ * Formatos admitidos para el hero. **JPG queda fuera a propósito**: no admite
+ * transparencia, y estas imágenes flotan recortadas sobre el degradado azul.
+ * Un JPG se vería como un rectángulo con fondo pegado encima del diseño.
+ */
+export const MIMES_HERO = ["image/png", "image/webp", "image/avif"] as const;
+
+export const esquemaHeroTile = z.object({
+  slot: z.coerce.number().int().min(1).max(4),
+
+  alt: z
+    .string()
+    .trim()
+    .min(2, "El texto alternativo debe tener al menos 2 caracteres.")
+    .max(60, "El texto alternativo no puede pasar de 60 caracteres."),
+
+  // Solo rutas internas: una dirección externa acá sacaría al visitante del
+  // sitio desde la portada, y además no hay forma de validar que exista.
+  href: z
+    .string()
+    .trim()
+    .regex(/^\/(?!\/)[\w\-/?=&%.ñáéíóúÁÉÍÓÚÑ]*$/, {
+      message: "La dirección debe ser una ruta del sitio y empezar con «/», por ejemplo /catalogo/audio.",
+    })
+    .max(200, "La dirección es demasiado larga."),
+
+  image: z.string().trim().min(1, "Falta la imagen."),
+});
+
+export type DatosHeroTile = z.infer<typeof esquemaHeroTile>;
+
+/**
+ * Comprueba que un PNG tenga canal alfa leyendo su cabecera IHDR.
+ * El byte 25 es el tipo de color: 6 = RGBA, 4 = grises con alfa, 3 = paleta
+ * (la transparencia viaja en un bloque tRNS aparte). 0 y 2 no tienen alfa.
+ *
+ * Solo se puede afirmar para PNG; con WebP y AVIF se confía en el aviso del
+ * panel y en la previsualización, que muestra exactamente cómo va a quedar.
+ */
+export function pngSinTransparencia(bytes: Buffer): boolean {
+  const esPng = bytes.length > 26 && bytes.subarray(1, 4).toString() === "PNG";
+  if (!esPng) return false;
+
+  const tipoDeColor = bytes[25];
+  if (tipoDeColor === 6 || tipoDeColor === 4) return false;
+  if (tipoDeColor === 3) return !bytes.subarray(0, 4096).includes(Buffer.from("tRNS"));
+  return true;
+}
+
+// ─── Diapositivas del carrusel ──────────────────────────────────────────────
+
+/** Ancho mínimo para una foto que se muestra a todo el ancho de la pantalla.
+ *  Por debajo se ve borrosa en cualquier monitor moderno. */
+export const ANCHO_MIN_SLIDE = 1200;
+
+export const esquemaSlide = z.object({
+  headline: z
+    .string()
+    .trim()
+    .min(4, "El título debe tener al menos 4 caracteres.")
+    .max(80, "El título no puede pasar de 80 caracteres."),
+
+  sub: z
+    .string()
+    .trim()
+    .min(4, "La bajada debe tener al menos 4 caracteres.")
+    .max(140, "La bajada no puede pasar de 140 caracteres."),
+
+  ctaLabel: z
+    .string()
+    .trim()
+    .min(2, "El texto del botón debe tener al menos 2 caracteres.")
+    .max(30, "El texto del botón no puede pasar de 30 caracteres."),
+
+  href: z
+    .string()
+    .trim()
+    .regex(/^\/(?!\/)[\w\-/?=&%.ñáéíóúÁÉÍÓÚÑ]*$/, {
+      message: "La dirección debe ser una ruta del sitio y empezar con «/», por ejemplo /promociones.",
+    })
+    .max(200, "La dirección es demasiado larga."),
+
+  image: z.string().trim().min(1, "Falta la imagen de la diapositiva."),
+});
+
+export type DatosSlide = z.infer<typeof esquemaSlide>;
+
+/**
+ * Ancho y alto de un PNG o un JPEG, leyendo la cabecera del archivo.
+ * Devuelve null para otros formatos: WebP y AVIF tienen varias variantes y
+ * preferimos no rechazar un archivo válido por no saber interpretarlo.
+ */
+export function dimensionesDeImagen(bytes: Buffer): { ancho: number; alto: number } | null {
+  if (bytes.length > 24 && bytes.subarray(1, 4).toString() === "PNG") {
+    return { ancho: bytes.readUInt32BE(16), alto: bytes.readUInt32BE(20) };
+  }
+
+  if (bytes.length > 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    // Recorre los marcadores hasta el que describe el tamaño (SOF).
+    let i = 2;
+    while (i + 9 < bytes.length) {
+      if (bytes[i] !== 0xff) {
+        i++;
+        continue;
+      }
+      const marcador = bytes[i + 1];
+      const esSof =
+        marcador >= 0xc0 && marcador <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marcador);
+      if (esSof) {
+        return { ancho: bytes.readUInt16BE(i + 7), alto: bytes.readUInt16BE(i + 5) };
+      }
+      i += 2 + bytes.readUInt16BE(i + 2);
+    }
+  }
+
+  return null;
+}

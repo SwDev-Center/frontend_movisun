@@ -3,12 +3,13 @@
 import { motion } from "motion/react";
 import { Plus } from "lucide-react";
 import { PRIMARY, COLOR_HEX, EASE } from "@/lib/constants";
-import { fmt, discountOf } from "@/lib/utils";
+import { fmt, discountOf, precioFinal, conPrecioFinal } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import { useShop } from "@/context/ShopContext";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { Badge } from "@/components/ui/Badge";
 import { Stars } from "@/components/ui/Stars";
+import { Countdown } from "@/components/ui/Countdown";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 44 },
@@ -18,6 +19,9 @@ const fadeUp = {
 export function ProductCard({ product }: { product: Product }) {
   const { openProduct, addToCart } = useShop();
   const disc = discountOf(product);
+  // Con oferta relámpago vigente manda ese precio, y el normal queda tachado.
+  const precio = precioFinal(product);
+  const enOferta = Boolean(product.flash);
 
   return (
     <motion.div
@@ -42,10 +46,18 @@ export function ProductCard({ product }: { product: Product }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
           <div className="absolute top-2 left-2 flex gap-1">
             {product.badge && <Badge text={product.badge} />}
-            {disc && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white">
-                -{disc}%
+            {/* Con oferta relámpago se muestra solo ese descuento: el de
+                originalPrice quedaría corto y confundiría. */}
+            {product.flash ? (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500 text-amber-950">
+                -{product.flash.extraDiscount}% EXTRA
               </span>
+            ) : (
+              disc && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white">
+                  -{disc}%
+                </span>
+              )
             )}
           </div>
           {product.colors && product.colors.length > 0 && (
@@ -72,23 +84,39 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
       </button>
-      <div className="flex items-end justify-between px-3.5 pb-3.5 pt-0.5">
-        <div>
-          <p className="text-base font-extrabold" style={{ color: PRIMARY }}>
-            {fmt(product.price)}
-          </p>
-          {product.originalPrice && (
-            <p className="text-xs text-muted-foreground line-through">{fmt(product.originalPrice)}</p>
-          )}
+      <div className="px-3.5 pb-3.5 pt-0.5">
+        {product.flash && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+            <Countdown hours={product.flash.endsInHours} />
+            <span className="text-[10px] text-muted-foreground">
+              {product.flash.stock} disponibles
+            </span>
+          </div>
+        )}
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-base font-extrabold" style={{ color: PRIMARY }}>
+              {fmt(precio)}
+            </p>
+            {enOferta ? (
+              <p className="text-xs text-muted-foreground line-through">{fmt(product.price)}</p>
+            ) : (
+              product.originalPrice && (
+                <p className="text-xs text-muted-foreground line-through">
+                  {fmt(product.originalPrice)}
+                </p>
+              )
+            )}
+          </div>
+          <button
+            onClick={() => addToCart(conPrecioFinal(product))}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
+            style={{ background: PRIMARY }}
+            aria-label={`Agregar ${product.name} al carrito`}
+          >
+            <Plus size={16} aria-hidden="true" />
+          </button>
         </div>
-        <button
-          onClick={() => addToCart(product)}
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm hover:opacity-90 active:scale-95 transition-all"
-          style={{ background: PRIMARY }}
-          aria-label={`Agregar ${product.name} al carrito`}
-        >
-          <Plus size={16} aria-hidden="true" />
-        </button>
       </div>
     </motion.div>
   );

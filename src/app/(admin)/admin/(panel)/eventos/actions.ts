@@ -24,9 +24,11 @@ export interface EstadoFormulario {
   error?: string;
 }
 
-// Solo cambia /api/v1/events: los productos no se tocan al editar una oferta.
+// Una oferta relámpago cambia /api/v1/events Y el precio que muestra el
+// catálogo, porque viaja dentro del propio producto (Product.flash).
 function refrescarEventos(): void {
   updateTag("events");
+  updateTag("products");
 }
 
 function volverConError(destino: string, err: unknown): never {

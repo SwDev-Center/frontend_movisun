@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { MOSTRAR_EVENTOS } from "@/lib/features";
 import { getEvents } from "@/api/events";
 import { getProducts } from "@/api/products";
 import { getAdvisors } from "@/api/advisors";
@@ -23,6 +25,10 @@ export const metadata: Metadata = {
 };
 
 export default async function EventosPage() {
+  // Sección apagada en src/lib/features.ts: la página no existe para nadie,
+  // ni siquiera escribiendo la dirección.
+  if (!MOSTRAR_EVENTOS) notFound();
+
   const [events, products, advisors] = await Promise.all([getEvents(), getProducts(), getAdvisors()]);
 
   // Esquema Event por cada evento en vivo. Usamos OnlineEventAttendanceMode

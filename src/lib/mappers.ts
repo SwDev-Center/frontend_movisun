@@ -16,6 +16,12 @@ import type {
 const MS_POR_DIA = 86_400_000;
 const MS_POR_HORA = 3_600_000;
 
+/** Horas que faltan hasta `fin`, redondeadas a un decimal y nunca negativas.
+ *  La usan tanto el producto como la oferta del catálogo de eventos. */
+function horasRestantes(fin: Date, ahora = Date.now()): number {
+  return Math.max(0, Math.round(((fin.getTime() - ahora) / MS_POR_HORA) * 10) / 10);
+}
+
 export interface ProductRow {
   id: number;
   name: string;
@@ -32,6 +38,11 @@ export interface ProductRow {
   colors: string[] | null;
   is_new: boolean;
   created_at: Date;
+  // Vienen del left join con flash_sales; null si el producto no tiene oferta
+  // vigente. Ver findProducts en src/lib/repo.ts.
+  flash_extra_discount: number | null;
+  flash_ends_at: Date | null;
+  flash_stock: number | null;
 }
 
 export function toProduct(r: ProductRow): Product {
@@ -55,6 +66,17 @@ export function toProduct(r: ProductRow): Product {
     isNew: r.is_new,
     // Derivado, no almacenado: así no se desfasa cuando la respuesta se cachea.
     addedDaysAgo: Math.max(0, Math.floor((Date.now() - r.created_at.getTime()) / MS_POR_DIA)),
+    // La oferta relámpago viaja con el producto: sin esto, el catálogo mostraría
+    // el precio lleno mientras /eventos muestra el rebajado.
+    ...(r.flash_ends_at !== null && r.flash_extra_discount !== null
+      ? {
+          flash: {
+            extraDiscount: r.flash_extra_discount,
+            endsInHours: horasRestantes(r.flash_ends_at),
+            stock: r.flash_stock ?? 0,
+          },
+        }
+      : {}),
   };
 }
 
@@ -208,13 +230,12 @@ export interface FlashSaleRow {
 }
 
 export function toFlashSale(r: FlashSaleRow): FlashSale {
-  const horas = (r.ends_at.getTime() - Date.now()) / MS_POR_HORA;
   return {
     productId: r.product_id,
     extraDiscount: r.extra_discount,
     // Derivado igual que addedDaysAgo. Nunca negativo: una oferta vencida
     // muestra el contador en cero, no un número al revés.
-    endsInHours: Math.max(0, Math.round(horas * 10) / 10),
+    endsInHours: horasRestantes(r.ends_at),
     stock: r.stock,
   };
 }

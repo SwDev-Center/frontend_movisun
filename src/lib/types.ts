@@ -32,6 +32,17 @@ export interface Category {
 
 export type ProductBadge = "Nuevo" | "Más vendido" | "Oferta";
 
+/** Oferta relámpago vigente de un producto, tal como la ve el sitio.
+ *  Viaja dentro del propio producto para que el precio con descuento se pueda
+ *  mostrar en cualquier pantalla, no solo en /eventos. */
+export interface ProductFlash {
+  /** Porcentaje entero que se descuenta SOBRE `price`. */
+  extraDiscount: number;
+  /** Horas que faltan para que termine. Derivado, nunca negativo. */
+  endsInHours: number;
+  stock: number;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -48,6 +59,8 @@ export interface Product {
   colors?: string[];
   isNew?: boolean;
   addedDaysAgo?: number;
+  /** Solo presente mientras la oferta esté vigente. */
+  flash?: ProductFlash;
 }
 
 export interface CartItem extends Product {
@@ -81,6 +94,30 @@ export interface FlashSale {
 export interface EventsCatalog {
   live: LiveEvent[];
   flash: FlashSale[];
+}
+
+/** Una de las cuatro piezas que flotan en la portada. */
+export interface HeroTile {
+  /** 1 a 4: qué esquina ocupa. El diseño de cada posición vive en el componente. */
+  slot: number;
+  image: string;
+  /** Texto alternativo, que además nombra el enlace para lectores de pantalla. */
+  alt: string;
+  /** Ruta interna a la que lleva el clic. */
+  href: string;
+}
+
+/** Una diapositiva del carrusel de la portada. */
+export interface HomeSlide {
+  id: number;
+  /** Foto apaisada: se muestra a todo el ancho y se recorta. */
+  image: string;
+  headline: string;
+  sub: string;
+  /** Texto del botón, por ejemplo «Ver categoría». */
+  ctaLabel: string;
+  /** Ruta interna a la que lleva el botón. */
+  href: string;
 }
 
 export interface Advisor {

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion, type Variants } from "motion/react";
-import { VolumeX, Volume2, Pause, Play } from "lucide-react";
 import { BRAND_VIDEO_ID } from "@/lib/constants";
 import { EASE } from "@/lib/constants";
 import { waGeneralUrl } from "@/lib/utils";
@@ -25,13 +24,13 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
   // Con "reducir movimiento" se pausa el video tras el montaje (2.2.2/2.3.3).
   // El valor se lee en un efecto: el primer render es idéntico en el servidor y
   // en el cliente para no romper la hidratación (useReducedMotion de framer no).
+  //
+  // El video es puramente decorativo y no tiene controles a la vista: siempre
+  // va en silencio (mute=1 en la URL), así que nunca puede sonar solo.
   const reduceMotion = usePrefersReducedMotion();
-  const [playing, setPlaying] = useState(true);
-  const [soundOn, setSoundOn] = useState(false);
   const wa = waGeneralUrl(advisors[0]?.wa ?? "");
 
-  // Ref al iframe de fondo para enviarle comandos de la API de YouTube
-  // (pausa/reanudar y silenciar/activar sonido) mediante postMessage.
+  // Ref al iframe de fondo para poder pausarlo con la API de YouTube.
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const sendCommand = (func: string) => {
     iframeRef.current?.contentWindow?.postMessage(
@@ -41,34 +40,20 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
   };
 
   // Pausar vía JSAPI (sin cambiar el src, para no recargar el embed) cuando el
-  // usuario prefiere menos movimiento. El cambio de UI se aplaza un frame para
-  // no llamar a setState de forma síncrona dentro del efecto.
+  // usuario prefiere menos movimiento. Al no haber botón de pausa, esta es la
+  // única forma de detener la animación de fondo.
   useEffect(() => {
     if (!reduceMotion) return;
     sendCommand("pauseVideo");
-    const raf = requestAnimationFrame(() => setPlaying(false));
-    return () => cancelAnimationFrame(raf);
   }, [reduceMotion]);
-
-  const togglePlay = () => {
-    if (playing) sendCommand("pauseVideo");
-    else sendCommand("playVideo");
-    setPlaying((p) => !p);
-  };
-
-  const toggleSound = () => {
-    if (soundOn) sendCommand("mute");
-    else sendCommand("unMute");
-    setSoundOn((s) => !s);
-  };
 
   // Autoplay fijo para que el `src` sea idéntico en servidor y cliente.
   const autoplay = 1;
 
   return (
     <section className="relative overflow-hidden" style={{ height: "min(520px, 90vw)", background: "#07111f" }}>
-      {/* Video de fondo: decorativo, oculto para lectores de pantalla.
-          La pausa/sonido se controla con los botones superpuestos. */}
+      {/* Video de fondo: decorativo, silenciado y oculto para lectores de
+          pantalla. Solo se detiene si el sistema pide reducir el movimiento. */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <iframe
           ref={iframeRef}
@@ -104,7 +89,7 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
           <motion.p variants={fadeUp} className="text-blue-200/80 text-base sm:text-lg mb-8 max-w-md mx-auto leading-relaxed">
             Calidad premium, precios accesibles. Descubre por qué Nariño confía en Movisun.
           </motion.p>
-          <motion.div variants={fadeUp} className="flex items-center justify-center gap-3">
+          <motion.div variants={fadeUp} className="flex items-center justify-center">
             <a
               href={wa}
               target="_blank"
@@ -114,24 +99,6 @@ export function BrandVideoSection({ advisors }: { advisors: Advisor[] }) {
             >
               <WaIcon size={17} /> Contactar ahora
             </a>
-            <div className="flex gap-2">
-              <button
-                onClick={togglePlay}
-                aria-label={playing ? "Pausar video" : "Reproducir video"}
-                aria-pressed={!playing}
-                className="flex items-center justify-center w-11 h-11 bg-white/15 hover:bg-white/25 text-white rounded-xl backdrop-blur transition-colors"
-              >
-                {playing ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
-              </button>
-              <button
-                onClick={toggleSound}
-                aria-label={soundOn ? "Silenciar video" : "Activar sonido"}
-                aria-pressed={soundOn}
-                className="flex items-center justify-center w-11 h-11 bg-white/15 hover:bg-white/25 text-white rounded-xl backdrop-blur transition-colors"
-              >
-                {soundOn ? <Volume2 size={18} aria-hidden="true" /> : <VolumeX size={18} aria-hidden="true" />}
-              </button>
-            </div>
           </motion.div>
         </motion.div>
       </div>

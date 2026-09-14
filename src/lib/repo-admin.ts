@@ -4,8 +4,10 @@ import {
   generarSlug,
   type DatosCategoria,
   type DatosEvento,
+  type DatosHeroTile,
   type DatosOferta,
   type DatosProducto,
+  type DatosSlide,
   type DatosSubcategoria,
 } from "@/lib/validation";
 
@@ -25,7 +27,9 @@ export interface FilaListado {
   image: string;
   badge: string | null;
   is_new: boolean;
-  en_oferta_flash: boolean;
+  /** Descuento de la oferta relámpago VIGENTE, si tiene una. */
+  flash_extra_discount: number | null;
+  flash_ends_at: Date | null;
 }
 
 export async function listarProductos(): Promise<FilaListado[]> {
@@ -34,10 +38,14 @@ export async function listarProductos(): Promise<FilaListado[]> {
            c.label as categoria,
            s.label as subcategoria,
            p.image, p.badge, p.is_new,
-           exists (select 1 from flash_sales f where f.product_id = p.id) as en_oferta_flash
+           -- Solo las vigentes: una oferta vencida no rebaja nada y marcarla
+           -- en el listado sería ruido.
+           f.extra_discount as flash_extra_discount,
+           f.ends_at        as flash_ends_at
       from products p
       join categories c    on c.id = p.category_id
       join subcategories s on s.id = p.subcategory_id
+      left join flash_sales f on f.product_id = p.id and f.ends_at > now()
      order by p.created_at desc, p.id desc
   `);
 }
@@ -506,6 +514,21 @@ export async function listarProductosSinOferta(): Promise<OpcionProducto[]> {
   `);
 }
 
+/** La oferta de un producto, esté vigente o vencida. La ficha del producto la
+ *  muestra en los dos casos: vencida también es información útil. */
+export async function buscarOfertaDeProducto(productId: number): Promise<FilaOferta | null> {
+  const [fila] = await query<FilaOferta>(
+    `select f.product_id, f.extra_discount, f.ends_at, f.stock,
+            p.name as producto, p.price as precio, p.image as imagen,
+            f.ends_at <= now() as vencida
+       from flash_sales f
+       join products p on p.id = f.product_id
+      where f.product_id = $1`,
+    [productId]
+  );
+  return fila ?? null;
+}
+
 export async function crearOferta(d: DatosOferta): Promise<void> {
   await query(
     `insert into flash_sales (product_id, extra_discount, ends_at, stock) values ($1,$2,$3,$4)`,
@@ -525,4 +548,96 @@ export async function actualizarOferta(productId: number, d: DatosOferta): Promi
 
 export async function eliminarOferta(productId: number): Promise<void> {
   await query("delete from flash_sales where product_id = $1", [productId]);
+}
+
+// ─── Piezas del hero ────────────────────────────────────────────────────────
+
+export interface FilaHeroTile {
+  slot: number;
+  image: string;
+  alt: string;
+  href: string;
+}
+
+export async function listarHeroTiles(): Promise<FilaHeroTile[]> {
+  return query<FilaHeroTile>("select slot, image, alt, href from hero_tiles order by slot");
+}
+
+export async function actualizarHeroTile(d: DatosHeroTile): Promise<void> {
+  const filas = await query<{ slot: number }>(
+    `update hero_tiles set image = $1, alt = $2, href = $3 where slot = $4 returning slot`,
+    [d.image, d.alt, d.href, d.slot]
+  );
+  if (!filas[0]) throw new Error("Esa posición de la portada no existe.");
+}
+
+/** Rutas reales del sitio, para sugerirlas en el panel. No limitan lo que se
+ *  puede escribir: son una ayuda para no equivocarse tipeando. */
+export async function rutasSugeridas(): Promise<string[]> {
+  const filas = await query<{ ruta: string }>(`
+    select '/catalogo/' || c.id as ruta, c.position, 0 as orden from categories c
+    union all
+    select '/catalogo/' || s.category_id || '?sub=' || s.label, c.position, 1
+      from subcategories s join categories c on c.id = s.category_id
+     order by position, orden, ruta
+  `);
+  return [...filas.map((f) => f.ruta), "/promociones", "/distribuidores", "/distribuidores/contacto", "/"];
+}
+
+// ─── Diapositivas del carrusel ──────────────────────────────────────────────
+
+export interface FilaSlide {
+  id: number;
+  image: string;
+  headline: string;
+  sub: string;
+  cta_label: string;
+  href: string;
+  position: number;
+}
+
+export async function listarSlides(): Promise<FilaSlide[]> {
+  return query<FilaSlide>(`
+    select id, image, headline, sub, cta_label, href, position
+      from home_slides
+     order by position, id
+  `);
+}
+
+export async function crearSlide(d: DatosSlide): Promise<void> {
+  await query(
+    `insert into home_slides (image, headline, sub, cta_label, href, position)
+     values ($1,$2,$3,$4,$5, coalesce((select max(position) + 1 from home_slides), 0))`,
+    [d.image, d.headline, d.sub, d.ctaLabel, d.href]
+  );
+}
+
+export async function actualizarSlide(id: number, d: DatosSlide): Promise<void> {
+  const filas = await query<{ id: number }>(
+    `update home_slides set image = $1, headline = $2, sub = $3, cta_label = $4, href = $5
+      where id = $6 returning id`,
+    [d.image, d.headline, d.sub, d.ctaLabel, d.href, id]
+  );
+  if (!filas[0]) throw new Error("Esa diapositiva ya no existe.");
+}
+
+export async function eliminarSlide(id: number): Promise<void> {
+  await query("delete from home_slides where id = $1", [id]);
+}
+
+export async function moverSlide(id: number, direccion: "arriba" | "abajo"): Promise<void> {
+  await transaction(async (client) => {
+    const { rows } = await client.query<{ id: number }>(
+      "select id from home_slides order by position, id"
+    );
+    const ids = rows.map((r) => r.id);
+    const desde = ids.indexOf(id);
+    const hasta = direccion === "arriba" ? desde - 1 : desde + 1;
+    if (desde < 0 || hasta < 0 || hasta >= ids.length) return;
+
+    [ids[desde], ids[hasta]] = [ids[hasta], ids[desde]];
+    for (const [posicion, sid] of ids.entries()) {
+      await client.query("update home_slides set position = $1 where id = $2", [posicion, sid]);
+    }
+  });
 }

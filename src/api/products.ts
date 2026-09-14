@@ -20,7 +20,9 @@ export async function getNewProducts(): Promise<Product[]> {
   return all.filter((p) => p.isNew || p.badge === "Nuevo");
 }
 
+/** Todo lo que está rebajado hoy: con precio anterior, con oferta relámpago
+ *  vigente, o las dos cosas. Es lo que alimenta /promociones. */
 export async function getDiscountedProducts(): Promise<Product[]> {
   const all = await getProducts();
-  return all.filter((p) => p.originalPrice);
+  return all.filter((p) => p.originalPrice || p.flash);
 }

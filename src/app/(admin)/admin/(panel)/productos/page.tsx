@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Plus, Pencil, Search, Zap } from "lucide-react";
 import { PRIMARY } from "@/lib/constants";
-import { fmt } from "@/lib/utils";
+import { fmt, precioConDescuento } from "@/lib/utils";
 import { listarProductos } from "@/lib/repo-admin";
 import { BotonBorrar } from "@/components/admin/BotonBorrar";
 
@@ -142,9 +142,9 @@ export default async function ProductosPage({
                                 Novedad
                               </span>
                             )}
-                            {p.en_oferta_flash && (
+                            {p.flash_extra_discount !== null && (
                               <span className="flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900">
-                                <Zap size={9} aria-hidden="true" /> Oferta relámpago
+                                <Zap size={9} aria-hidden="true" /> -{p.flash_extra_discount}% relámpago
                               </span>
                             )}
                           </div>
@@ -157,11 +157,26 @@ export default async function ProductosPage({
                       {p.subcategoria}
                     </td>
                     <td className="p-3 whitespace-nowrap tabular-nums">
-                      <span className="font-bold text-foreground">{fmt(p.price)}</span>
-                      {p.original_price && (
-                        <span className="ml-1.5 text-xs line-through text-muted-foreground">
-                          {fmt(p.original_price)}
-                        </span>
+                      {/* Con oferta vigente se muestra lo que realmente paga el
+                          cliente, que es lo que ve en el sitio. */}
+                      {p.flash_extra_discount !== null ? (
+                        <>
+                          <span className="font-bold text-amber-700">
+                            {fmt(precioConDescuento(p.price, p.flash_extra_discount))}
+                          </span>
+                          <span className="ml-1.5 text-xs line-through text-muted-foreground">
+                            {fmt(p.price)}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold text-foreground">{fmt(p.price)}</span>
+                          {p.original_price && (
+                            <span className="ml-1.5 text-xs line-through text-muted-foreground">
+                              {fmt(p.original_price)}
+                            </span>
+                          )}
+                        </>
                       )}
                     </td>
                     <td className="p-3">

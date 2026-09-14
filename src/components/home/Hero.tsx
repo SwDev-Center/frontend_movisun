@@ -8,72 +8,73 @@ import { useShop } from "@/context/ShopContext";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { IMG } from "@/assets/images";
+import type { HeroTile } from "@/lib/types";
 
-export function Hero() {
+// Composición de cada esquina: posición, tamaño, brillos y ritmo de flotación,
+// replicando el mockup de Figma. Es diseño, no contenido: la imagen, el texto
+// y el enlace de cada pieza se administran desde /admin/inicio.
+// El orden del arreglo corresponde a los slots 1 a 4.
+const DISENO = [
+  {
+    cls: "top-[12%] left-[9%]",
+    fromX: -55,
+    enterDelay: 0.4,
+    dur: 5.6,
+    bobDelay: 0,
+    amp: 20,
+    size: "w-[250px] h-[250px]",
+    glowOuter: "w-[270px] h-[270px]",
+    glowInner: "w-[130px] h-[130px]",
+    shadow: "rgba(180,210,255,0.22)",
+  },
+  {
+    cls: "bottom-[9%] left-[11%]",
+    fromX: -55,
+    enterDelay: 0.65,
+    dur: 4.9,
+    bobDelay: 1.6,
+    amp: 18,
+    size: "w-[235px] h-[235px]",
+    glowOuter: "w-[250px] h-[250px]",
+    glowInner: "w-[120px] h-[120px]",
+    shadow: "rgba(255,255,255,0.10)",
+  },
+  {
+    cls: "top-[10%] right-[9%]",
+    fromX: 55,
+    enterDelay: 0.52,
+    dur: 5.2,
+    bobDelay: 0.7,
+    amp: 22,
+    size: "w-[255px] h-[255px]",
+    glowOuter: "w-[280px] h-[210px]",
+    glowInner: "w-[130px] h-[95px]",
+    shadow: "rgba(255,255,255,0.10)",
+  },
+  {
+    cls: "bottom-[10%] right-[11%]",
+    fromX: 55,
+    enterDelay: 0.78,
+    dur: 4.5,
+    bobDelay: 1.0,
+    amp: 16,
+    size: "w-[230px] h-[230px]",
+    glowOuter: "w-[250px] h-[250px]",
+    glowInner: "w-[120px] h-[120px]",
+    shadow: "rgba(255,255,255,0.10)",
+  },
+];
+
+export function Hero({ tiles }: { tiles: HeroTile[] }) {
   const { openVideo } = useShop();
   // Sin animaciones de flotación ni pulso para quien prefiere menos movimiento.
   const reduceMotion = usePrefersReducedMotion();
 
-  // Los 4 productos del hero en sus esquinas (solo escritorio ≥1280px),
-  // replicando la posición, brillos, sombras y ritmos del mockup de Figma.
-  const floaters = [
-    {
-      img: IMG.heroWatch,
-      alt: "Smartwatch",
-      cls: "top-[12%] left-[9%]",
-      fromX: -55,
-      enterDelay: 0.4,
-      dur: 5.6,
-      bobDelay: 0,
-      amp: 20,
-      size: "w-[250px] h-[250px]",
-      glowOuter: "w-[270px] h-[270px]",
-      glowInner: "w-[130px] h-[130px]",
-      shadow: "rgba(180,210,255,0.22)",
-    },
-    {
-      img: IMG.heroHeadphones,
-      alt: "Diadema",
-      cls: "bottom-[9%] left-[11%]",
-      fromX: -55,
-      enterDelay: 0.65,
-      dur: 4.9,
-      bobDelay: 1.6,
-      amp: 18,
-      size: "w-[235px] h-[235px]",
-      glowOuter: "w-[250px] h-[250px]",
-      glowInner: "w-[120px] h-[120px]",
-      shadow: "rgba(255,255,255,0.10)",
-    },
-    {
-      img: IMG.heroSpeaker,
-      alt: "Parlante",
-      cls: "top-[10%] right-[9%]",
-      fromX: 55,
-      enterDelay: 0.52,
-      dur: 5.2,
-      bobDelay: 0.7,
-      amp: 22,
-      size: "w-[255px] h-[255px]",
-      glowOuter: "w-[280px] h-[210px]",
-      glowInner: "w-[130px] h-[95px]",
-      shadow: "rgba(255,255,255,0.10)",
-    },
-    {
-      img: IMG.heroEarbuds,
-      alt: "Earbuds",
-      cls: "bottom-[10%] right-[11%]",
-      fromX: 55,
-      enterDelay: 0.78,
-      dur: 4.5,
-      bobDelay: 1.0,
-      amp: 16,
-      size: "w-[230px] h-[230px]",
-      glowOuter: "w-[250px] h-[250px]",
-      glowInner: "w-[120px] h-[120px]",
-      shadow: "rgba(255,255,255,0.10)",
-    },
-  ];
+  // Se combina lo que manda el panel con la composición de cada esquina.
+  // Si falta una pieza en la base, esa esquina simplemente no se dibuja.
+  const floaters = tiles
+    .filter((t) => t.slot >= 1 && t.slot <= DISENO.length)
+    .map((t) => ({ ...DISENO[t.slot - 1], ...t }));
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ background: HERO_BG }}>
@@ -92,7 +93,7 @@ export function Hero() {
 
       {floaters.map((f) => (
         <motion.div
-          key={f.alt}
+          key={f.slot}
           className={`hidden xl:block absolute ${f.cls}`}
           style={{ zIndex: 2 }}
           initial={{ opacity: 0, x: f.fromX }}
@@ -105,20 +106,27 @@ export function Hero() {
             animate={reduceMotion ? { y: 0 } : { y: [0, -f.amp, 0] }}
             transition={reduceMotion ? { duration: 0 } : { duration: f.dur, repeat: Infinity, ease: "easeInOut", delay: f.bobDelay }}
           >
-            <div className="relative">
-              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl opacity-[0.22] pointer-events-none bg-white ${f.glowOuter}`} />
-              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl opacity-[0.18] pointer-events-none bg-white ${f.glowInner}`} />
-              <div className={`relative ${f.size}`}>
-                <ProductImage
-                  src={f.img}
-                  alt={f.alt}
-                  fill
-                  className="object-contain"
-                  style={{ filter: `drop-shadow(0 8px 32px ${f.shadow})` }}
-                  priority
-                />
+            {/* Cada pieza es un enlace real: el texto alternativo de la imagen
+                es lo que nombra el destino para un lector de pantalla. */}
+            <Link
+              href={f.href}
+              className="block rounded-3xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            >
+              <div className="relative">
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl opacity-[0.22] pointer-events-none bg-white ${f.glowOuter}`} />
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl opacity-[0.18] pointer-events-none bg-white ${f.glowInner}`} />
+                <div className={`relative ${f.size} transition-transform duration-300 hover:scale-105`}>
+                  <ProductImage
+                    src={f.image}
+                    alt={f.alt}
+                    fill
+                    className="object-contain"
+                    style={{ filter: `drop-shadow(0 8px 32px ${f.shadow})` }}
+                    priority
+                  />
+                </div>
               </div>
-            </div>
+            </Link>
           </motion.div>
         </motion.div>
       ))}

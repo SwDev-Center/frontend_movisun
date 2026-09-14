@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Plus, Pencil, ChevronUp, ChevronDown, AlertCircle, Radio, Save, Zap } from "lucide-react";
 import { PRIMARY } from "@/lib/constants";
+import { MOSTRAR_EVENTOS } from "@/lib/features";
 import { fmt } from "@/lib/utils";
 import { etiquetaDeFecha, fechaParaFormulario } from "@/lib/mappers";
 import { listarEventos, listarOfertas, listarProductosSinOferta } from "@/lib/repo-admin";
@@ -84,6 +85,15 @@ export default async function EventosPage({
           className="mb-5 p-3 rounded-xl text-sm font-medium border bg-green-50 border-green-200 text-green-800"
         >
           {MENSAJES[estado]}
+        </p>
+      )}
+
+      {!MOSTRAR_EVENTOS && (
+        <p className="mb-6 p-3 rounded-xl text-sm border border-border bg-white text-muted-foreground">
+          <strong className="text-foreground">La página pública de eventos está oculta.</strong>{" "}
+          Lo que cargues en «Eventos en vivo» no se ve en el sitio por ahora. Las{" "}
+          <strong className="text-foreground">ofertas relámpago sí siguen activas</strong>: aparecen
+          en el catálogo y en Promociones con su precio rebajado.
         </p>
       )}
 

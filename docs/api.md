@@ -56,6 +56,7 @@ las funciones de `src/api/products.ts` sobre la lista ya recibida.
 | `reviews` | number | sí | Solo el conteo. No existe entidad de reseña. |
 | `colors` | string[] | no | Los nombres conocidos llevan muestra de color (ver `COLOR_HEX` en `src/lib/constants.ts`); cualquier otro funciona igual, sin muestra. |
 | `isNew` | boolean | sí | Destaca el producto en el carrusel de la portada. |
+| `flash` | objeto | no | **Solo si tiene una oferta relámpago vigente**: `{ extraDiscount, endsInHours, stock }`. El descuento se aplica sobre `price`. Es lo que permite que el catálogo, la búsqueda y la ficha muestren el precio rebajado sin consultar `/events`. |
 | `addedDaysAgo` | number | sí | **Derivado**, no almacenado: se calcula desde `products.created_at` en cada respuesta. Es el criterio de orden por novedad. |
 
 ### `GET /api/v1/categories`
@@ -76,13 +77,15 @@ Devuelve `Category[]`, ordenadas por su posición.
 
 ### `GET /api/v1/advisors`
 
-Devuelve `Advisor[]`. **Todavía no sale de la base**: son datos fijos en
-`src/lib/data/advisors.mock.ts`.
+Devuelve `Advisor[]`. **No sale de la base**: se arma en `src/lib/advisors.ts`
+a partir de la variable de entorno `WHATSAPP_VENTAS`. Hoy trae **un solo
+elemento** (Ventas); sigue siendo un arreglo porque todas las vistas lo recorren
+con `.map` y para sumar otro asesor alcanza con agregarlo a `getAdvisors()`.
 
 | Campo | Tipo | Notas |
 |---|---|---|
 | `name` | string | Se usa como clave de React en la página de contacto: tiene que ser único. |
-| `label` | string | «Ventas» o «Soporte». Los datos estructurados lo inspeccionan: si contiene «venta», se marca como contacto comercial. |
+| `label` | string | Hoy siempre «Ventas». Los datos estructurados lo inspeccionan: si contiene «venta», se marca como contacto comercial. |
 | `phone` | string | 10 dígitos **sin** indicativo. El sitio antepone `+57`. |
 | `wa` | string | Con indicativo y **sin** `+` (`573200000001`). Va literal dentro del enlace `wa.me/`. |
 
@@ -120,6 +123,34 @@ arreglo.
 | `endsInHours` | number | **Derivado**, no almacenado: se calcula desde `flash_sales.ends_at`. Admite decimales y nunca es negativo. |
 | `stock` | number | El **único** inventario de todo el sistema, y solo para estas ofertas. |
 
+### `GET /api/v1/hero`
+
+Devuelve `HeroTile[]`: las cuatro piezas que flotan en las esquinas de la portada.
+Siempre son cuatro, ordenadas por `slot`.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `slot` | number | 1 a 4: qué esquina ocupa. La posición, el tamaño y el ritmo de la animación son diseño y viven en `src/components/home/Hero.tsx`, no en la base. |
+| `image` | string | Ruta relativa. **Debe tener fondo transparente**: la pieza flota recortada sobre el degradado azul. |
+| `alt` | string | Texto alternativo; también es lo que nombra el enlace para un lector de pantalla. |
+| `href` | string | Ruta interna a la que lleva el clic. Siempre empieza con `/`. |
+
+> Estas piezas **solo se ven en pantallas de 1280 px o más**.
+
+### `GET /api/v1/slides`
+
+Devuelve `HomeSlide[]`: las diapositivas del carrusel de la portada, en orden.
+La cantidad es libre; con el arreglo vacío el carrusel no se dibuja.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | number | |
+| `image` | string | Foto **apaisada**, mínimo 1200 px de ancho: se muestra a todo el ancho y se recorta a una franja. Al revés que el hero, acá el JPG es lo adecuado. |
+| `headline` | string | Título grande sobre la foto. |
+| `sub` | string | Bajada. |
+| `ctaLabel` | string | Texto del botón, por ejemplo «Ver categoría». |
+| `href` | string | Ruta interna a la que lleva el botón. Siempre empieza con `/`. |
+
 ### `GET /api/v1/images/[id]`
 
 Sirve una imagen subida desde el panel, guardada en la tabla `images`.
@@ -139,10 +170,12 @@ El cliente de `src/api/*` cachea cada endpoint con `next.revalidate`:
 
 | Endpoint | Vida de la caché | ¿Se invalida al guardar en el panel? |
 |---|---|---|
-| `/products` | 120 s | **Sí**, con `updateTag("products")` |
+| `/products` | 120 s | **Sí**, con `updateTag("products")` — también al guardar una oferta relámpago, porque viaja dentro del producto |
 | `/categories` | 600 s | **Sí**, con `updateTag("categories")` |
 | `/advisors` | 600 s | No aplica: no es editable |
 | `/events` | 120 s | **Sí**, con `updateTag("events")` |
+| `/hero` | 600 s | **Sí**, con `updateTag("hero")` |
+| `/slides` | 600 s | **Sí**, con `updateTag("slides")` |
 
 En Next 16, `revalidateTag` exige dos argumentos y sigue sirviendo contenido
 viejo un rato. Para ver lo que uno acaba de escribir, desde una Server Action va

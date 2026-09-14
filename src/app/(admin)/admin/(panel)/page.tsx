@@ -39,9 +39,10 @@ export default async function PanelPage() {
     },
     {
       icono: <ImageIcon size={18} aria-hidden="true" />,
-      titulo: "Imágenes",
-      dato: `${r.imagenes} subidas desde el panel`,
-      estado: "Se suben desde la ficha de cada producto",
+      titulo: "Portada",
+      dato: "4 imágenes flotantes en la página de inicio",
+      estado: "Cambiar la imagen y a dónde lleva cada una",
+      href: "/admin/inicio",
     },
   ];
 

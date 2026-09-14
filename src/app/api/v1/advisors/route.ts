@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { advisors } from "@/lib/data/advisors.mock";
+import { getAdvisors } from "@/lib/advisors";
 
-// Los asesores todavía NO son administrables: quedaron fuera del alcance de
-// esta primera versión del panel, así que siguen siendo datos fijos.
-// El orden importa: advisors[0] es el asesor de ventas y es el número que
-// recibe los pedidos del carrito (ver getSalesAdvisor en src/api/advisors.ts).
+// Asesores de WhatsApp. No se administran desde el panel: salen de las
+// variables WHATSAPP_VENTAS y WHATSAPP_SOPORTE del .env.local.
+//
+// El orden importa: el primero es el número que recibe los pedidos del carrito
+// (ver getSalesAdvisor en src/api/advisors.ts).
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(advisors);
+  return NextResponse.json(getAdvisors());
 }

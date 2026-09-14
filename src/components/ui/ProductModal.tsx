@@ -4,12 +4,13 @@ import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { X, Minus, Plus, CheckCircle } from "lucide-react";
 import { PRIMARY, COLOR_HEX, EASE } from "@/lib/constants";
-import { fmt, discountOf } from "@/lib/utils";
+import { fmt, discountOf, precioFinal, conPrecioFinal } from "@/lib/utils";
 import { useShop } from "@/context/ShopContext";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { Badge } from "@/components/ui/Badge";
 import { Stars } from "@/components/ui/Stars";
+import { Countdown } from "@/components/ui/Countdown";
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -32,8 +33,12 @@ export function ProductModal() {
 
   if (!product) return null;
 
+  // El precio de la oferta relámpago es el que entra al carrito: si no, el
+  // pedido de WhatsApp diría un número distinto al que vio la persona.
+  const precio = precioFinal(product);
+
   const handleAdd = () => {
-    addToCart(product, qty, color);
+    addToCart(conPrecioFinal(product), qty, color);
     closeProduct();
   };
 
@@ -70,10 +75,16 @@ export function ProductModal() {
           </button>
           <div className="absolute top-4 left-4 flex gap-1.5">
             {product.badge && <Badge text={product.badge} />}
-            {disc && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white">
-                -{disc}%
+            {product.flash ? (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500 text-amber-950">
+                -{product.flash.extraDiscount}% EXTRA
               </span>
+            ) : (
+              disc && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-600 text-white">
+                  -{disc}%
+                </span>
+              )
             )}
           </div>
         </div>
@@ -90,12 +101,26 @@ export function ProductModal() {
           </div>
           <div className="flex items-baseline gap-3 mb-4">
             <span className="text-3xl font-extrabold" style={{ color: PRIMARY }}>
-              {fmt(product.price)}
+              {fmt(precio)}
             </span>
-            {product.originalPrice && (
-              <span className="text-base text-muted-foreground line-through">{fmt(product.originalPrice)}</span>
+            {product.flash ? (
+              <span className="text-base text-muted-foreground line-through">{fmt(product.price)}</span>
+            ) : (
+              product.originalPrice && (
+                <span className="text-base text-muted-foreground line-through">
+                  {fmt(product.originalPrice)}
+                </span>
+              )
             )}
           </div>
+
+          {product.flash && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
+              <span className="text-xs font-bold text-amber-950">Oferta relámpago</span>
+              <Countdown hours={product.flash.endsInHours} />
+              <span className="text-xs text-amber-900">{product.flash.stock} disponibles</span>
+            </div>
+          )}
           <p className="text-sm text-foreground/70 leading-relaxed mb-5">{product.description}</p>
 
           {product.colors && product.colors.length > 0 && (
@@ -166,7 +191,7 @@ export function ProductModal() {
               className="flex-1 py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-[.98]"
               style={{ background: PRIMARY }}
             >
-              Agregar — {fmt(product.price * qty)}
+              Agregar — {fmt(precio * qty)}
             </button>
           </div>
         </div>
