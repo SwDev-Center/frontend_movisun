@@ -124,9 +124,20 @@ db/                  esquema SQL y carga inicial
 
 Los grupos entre paréntesis son una convención de Next: **no aparecen en la URL**.
 
-El detalle de los endpoints y de cada entidad está en
-**[docs/api.md](docs/api.md)**. Las decisiones de arquitectura y las trampas
-conocidas del código, en **[CLAUDE.md](CLAUDE.md)**.
+## Documentación técnica
+
+Este README es para poner el proyecto en marcha y usarlo. Para trabajar sobre el
+código, el punto de entrada es **[CLAUDE.md](CLAUDE.md)**, que indica qué leer
+según lo que vayas a tocar:
+
+| Documento | Qué cubre |
+|---|---|
+| [CLAUDE.md](CLAUDE.md) | Mapa del proyecto, convenciones y reglas de trabajo |
+| [docs/API.md](docs/API.md) | Endpoints, campos de cada entidad, caché y errores |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Flujo de una petición, capas, sesión, middleware |
+| [docs/DATABASE.md](docs/DATABASE.md) | Tablas, relaciones, campos derivados, migraciones |
+| [docs/FRONTEND.md](docs/FRONTEND.md) | Rutas, componentes, estado, formularios, estilos |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Por qué el sistema es así |
 
 ## Accesibilidad
 

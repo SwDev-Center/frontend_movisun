@@ -8,38 +8,81 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Movisun frontend
+# Movisun Nariño
 
-Public marketing/catalog site for Movisun Nariño, a tech-accessories store in Nariño, Colombia. Next.js 16 App Router + React 19 + Tailwind v4.
+Sitio de catálogo + panel de administración. Next.js 16 App Router, React 19,
+Tailwind v4, PostgreSQL.
 
-## Commands
+**El punto de entrada al proyecto es [CLAUDE.md](CLAUDE.md)**, que indica qué
+documento de `docs/` leer según lo que vayas a modificar. Este archivo guarda
+solo lo propio de esta versión de Next y de React, que es lo que más difiere de
+lo que un modelo trae aprendido.
 
-- `npm run dev` — dev server on http://localhost:3000
-- `npm run lint` — ESLint only (`eslint-config-next` core-web-vitals + typescript)
-- `npm run build` — production build; this is the typecheck gate — there is **no** separate `typecheck` script, `next build` runs TypeScript
+## Next.js 16 / React 19: lo que cambia
 
-No test framework or suite exists.
+- Esta versión de Next difiere de tu entrenamiento — leé la guía en
+  `node_modules/next/dist/docs/` antes de escribir código (bloque de arriba).
+- **`params` y `searchParams` son promesas** y hay que `await`earlas, también
+  dentro de `generateMetadata`. Ver `src/app/(tienda)/catalogo/[categoria]/page.tsx`.
+- Next genera tipos globales de rutas en `.next/` (`Routes`, `PageProps<"/...">`,
+  `LayoutProps<"/">`); `src/app/(tienda)/layout.tsx` usa `LayoutProps<"/">` sin
+  importarlo.
+- **Desde una Server Action, para invalidar caché va `updateTag`, no
+  `revalidateTag`**: en Next 16 este último exige dos argumentos y sigue
+  sirviendo contenido viejo un rato.
+- **`notFound()` no cambia el código de estado** si el layout es `force-dynamic`
+  y la respuesta ya empezó a salir: devuelve 200 con el 404 pintado encima. Para
+  apagar una ruta de verdad hace falta `src/middleware.ts`.
+- `eslint` marca `Date.now()` en render (`react-hooks/purity`), pero no
+  `new Date()`. En Server Components `force-dynamic`, leer la hora es lo buscado.
+- `react-hooks/set-state-in-effect` prohíbe llamar a un `setState` desde un
+  `useEffect`. Si hace falta una bandera junto a otro estado, va **dentro** del
+  reducer.
+- `motion` (ex framer-motion) se importa como `motion/react` y va envuelto en
+  `<MotionConfig reducedMotion="user">`.
 
-## Architecture
+## Dos layouts raíz
 
-- All source lives under `src/`; path alias `@/*` → `./src/*`.
-- Server Components by default; interactive pieces opt in with `"use client"` (every `context/`, `hooks/`, and the `layout/`, `home/`, `catalog/`, `eventos/`, `promociones/`, `ui/` components).
-- Data seam: `src/api/*` (`http.ts` + products/categories/advisors/events) fetches local mock route handlers `src/app/api/v1/*`, which serve `src/lib/data/*.mock.ts` with ~200 ms artificial latency so `loading.tsx` skeletons actually render. To switch to the real API: set `API_BASE_URL` and delete `src/app/api/v1/` — no page/component changes required.
-- Mock route handlers only exist at request time, so anything that fetches them at build time must be `force-dynamic`: `src/app/layout.tsx` and `src/app/sitemap.ts` already are. Don't statically prerender new pages that fetch through `src/api/*`.
+`src/app/` **no tiene `layout.tsx`**. Hay uno en `(tienda)/` y otro en `(admin)/`.
+Los grupos entre paréntesis no aparecen en la URL. Por eso el 404 vive en
+`(tienda)/not-found.tsx`: un `not-found.tsx` global exigiría la bandera
+experimental `globalNotFound`.
 
-## Next.js 16 / React 19 specifics
+## La costura de datos
 
-- This Next version differs from older training data — read the guide in `node_modules/next/dist/docs/` before writing code (block above).
-- `params` and `searchParams` are Promises and must be `await`ed — including inside `generateMetadata` (see `src/app/catalogo/[categoria]/page.tsx`).
-- Next generates global, typed-route types in `.next/` (e.g. `Routes`, `PageProps<"/...">`, `LayoutProps<"/">`); `src/app/layout.tsx` uses `LayoutProps<"/">` with no import.
-- Motion (ex-framer-motion) is imported as `motion/react` and wrapped in `MotionConfig reducedMotion="user"`.
+`src/api/*` (`http.ts` + products/categories/advisors/events/hero/slides) hace
+`fetch` a los route handlers de `src/app/api/v1/*`, que leen de PostgreSQL.
+**Ya no hay mocks**: `src/lib/data/` se borró.
 
-## Styling & a11y
+Esos handlers solo existen en tiempo de petición, así que **todo lo que consuma
+`src/api/*` tiene que ser `force-dynamic`**. Ya lo son `(tienda)/layout.tsx` y
+`src/app/sitemap.ts`.
 
-- Tailwind v4, **CSS-first config**: tokens are defined via `@theme inline` in `src/app/globals.css` (e.g. `bg-background`, `text-muted-foreground`); there is no `tailwind.config` file. Custom CSS vars use parenthesized syntax, e.g. `bg-(--wa-btn)`.
-- Accessibility (WCAG AA) is a hard requirement: skip link, `:focus-visible` rings, modals with focus trap + live region, `prefers-reduced-motion` handling. WhatsApp buttons deliberately use `#15803D` because brand green `#25D366` fails AA contrast. Don't regress these.
-- All UI copy, code comments, and aria labels are in Spanish (Colombia); new content must match. Prices use `fmt()` from `src/lib/utils.ts` (COP, es-CO locale).
+## Comandos
 
-## Env
+- `npm run dev` — servidor de desarrollo en http://localhost:3000
+- `npm run lint` — ESLint
+- **`npx tsc --noEmit` — control de tipos.** Preferilo a `npm run build`, que
+  comparte `.next/` con el servidor de desarrollo y lo rompe si está corriendo.
+- `npm run db:setup` — esquema y carga inicial
 
-Copy `.env.example` → `.env.local`. `NEXT_PUBLIC_SITE_URL` drives sitemap/canonical/Open Graph URLs; `API_BASE_URL` (or `VERCEL_URL`) selects the API endpoint.
+No existe framework ni suite de pruebas.
+
+## Estilos y accesibilidad
+
+- Tailwind v4 con **configuración en CSS**: los tokens se declaran con
+  `@theme inline` en `src/app/globals.css`. No hay `tailwind.config`. Las
+  variables propias se usan entre paréntesis: `bg-(--wa-btn)`.
+- La accesibilidad (WCAG AA) es un **requisito duro**: enlace de salto, anillos de
+  `:focus-visible`, modales con trampa de foco y región viva, respeto por
+  `prefers-reduced-motion`. Los botones de WhatsApp usan `#15803D` a propósito,
+  porque el verde de marca `#25D366` no alcanza el contraste AA. No lo revirtás.
+- Toda la copia, los comentarios y las etiquetas aria van en **español (Colombia)**.
+  Los precios se formatean con `fmt()` de `src/lib/utils.ts`.
+
+## Variables de entorno
+
+Copiar `.env.example` → `.env.local` (el segundo está en `.gitignore`).
+`DATABASE_URL`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` y `WHATSAPP_VENTAS` son
+obligatorias; `NEXT_PUBLIC_SITE_URL` alimenta sitemap, canonical y Open Graph, y
+`API_BASE_URL` (o `VERCEL_URL`) elige el origen de la API. Detalle en el README.

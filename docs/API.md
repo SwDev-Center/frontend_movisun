@@ -6,22 +6,46 @@ La API vive dentro del mismo proyecto Next.js, en `src/app/api/v1/`. La fuente
 de verdad de los tipos es **`src/lib/types.ts`**: este documento la describe en
 prosa, pero si los dos se contradicen, manda el archivo.
 
+Para el flujo completo de una petición está [ARCHITECTURE.md](ARCHITECTURE.md);
+para las tablas, [DATABASE.md](DATABASE.md).
+
+## Dónde está implementado
+
+| Grupo | Endpoints | Handler | Datos |
+|---|---|---|---|
+| Catálogo | `/products` | `src/app/api/v1/products/route.ts` | `findProducts()` en `src/lib/repo.ts` |
+| Menú | `/categories` | `src/app/api/v1/categories/route.ts` | `findCategories()` |
+| Eventos | `/events` | `src/app/api/v1/events/route.ts` | `findEvents()` |
+| Portada | `/hero`, `/slides` | `src/app/api/v1/hero/`, `slides/route.ts` | `findHeroTiles()`, `findHomeSlides()` |
+| Contacto | `/advisors` | `src/app/api/v1/advisors/route.ts` | `getAdvisors()` en `src/lib/advisors.ts` (**no** la base) |
+| Imágenes | `/images/[id]` | `src/app/api/v1/images/[id]/route.ts` | Consulta directa a la tabla `images` |
+
+Los seis primeros son **`force-dynamic`** y su cuerpo es siempre el mismo: llamar
+a una función del repositorio y devolver `NextResponse.json(...)`. Toda la
+traducción de fila a DTO vive en `src/lib/mappers.ts`.
+
 ## Regla que no se rompe
 
 Las respuestas tienen que seguir siendo exactamente las que declara
 `src/lib/types.ts`. Mientras se cumpla, ninguna página ni componente del sitio
 público necesita cambiar cuando se toca la capa de datos.
 
-**Cómo verificarlo:** guardá la respuesta de los cuatro endpoints antes del
+**Cómo verificarlo:** guardá la respuesta de todos los endpoints antes del
 cambio, repetila después y compará campo por campo. Es lo que se hizo al migrar
 de los datos falsos a PostgreSQL, y detectó las dos únicas diferencias que hubo.
 
 ## Convenciones
 
+- **Solo `GET`.** No hay `POST`, `PUT`, `PATCH` ni `DELETE` en toda la API: las
+  escrituras van por Server Actions (ver «Escrituras» al final). Cualquier otro
+  método recibe **405** de Next, porque el handler no lo exporta.
 - JSON plano: **sin envoltura `{ data: … }`**, sin metadatos de paginación.
 - **Sin parámetros de consulta.** Cada endpoint devuelve su colección completa;
   el filtrado ocurre después, en el servidor de Next o en el navegador.
+- **El único parámetro de ruta es el `[id]` de `/images`.** Ningún otro endpoint
+  recibe parámetros de ningún tipo.
 - **Sin autenticación.** Son datos públicos, los mismos que muestra el sitio.
+  Nada de lo que devuelven es sensible: no hay usuarios, pedidos ni pagos.
 - Los campos **opcionales se omiten** cuando no tienen valor. No llegan como
   `null`: directamente no aparece la clave.
 - Los precios son **pesos colombianos enteros**, sin decimales ni centavos.
@@ -176,10 +200,50 @@ El cliente de `src/api/*` cachea cada endpoint con `next.revalidate`:
 | `/events` | 120 s | **Sí**, con `updateTag("events")` |
 | `/hero` | 600 s | **Sí**, con `updateTag("hero")` |
 | `/slides` | 600 s | **Sí**, con `updateTag("slides")` |
+| `/images/[id]` | 1 año, inmutable | No hace falta: el id es el hash del contenido |
 
 En Next 16, `revalidateTag` exige dos argumentos y sigue sirviendo contenido
 viejo un rato. Para ver lo que uno acaba de escribir, desde una Server Action va
 **`updateTag`**, que expira al instante.
+
+## Errores
+
+**No hay un formato de error común.** Cada endpoint hace lo mínimo:
+
+| Situación | Respuesta |
+|---|---|
+| Todo bien | `200` con el JSON |
+| `/images/[id]` con un id inexistente | `404` con `{ "error": "Imagen no encontrada" }` |
+| Método distinto de `GET` | `405`, generado por Next |
+| La consulta a la base falla | **`500`**, la página de error de Next |
+
+Los seis endpoints de datos **no tienen `try`/`catch`**: si Postgres no responde,
+la excepción sube y Next devuelve 500. No hay reintentos ni degradación elegante.
+
+> Esto importa más de lo que parece: `(tienda)/layout.tsx` llama a `/advisors` y
+> `/categories` en **cada** render, y **no existe `error.tsx` ni
+> `global-error.tsx`**, así que un fallo en cualquiera de los dos tumba la tienda
+> entera. El panel no depende de esos endpoints.
+
+Del lado del consumidor, `httpGet` (`src/api/http.ts`) lanza `ApiError` con el
+estado y la ruta cuando la respuesta no es 2xx, y **no valida la forma del
+cuerpo**: hace `res.json() as Promise<T>`.
+
+### Errores de las escrituras
+
+Las Server Actions no devuelven JSON. Informan de dos maneras:
+
+| Vía | Cuándo | Cómo llega |
+|---|---|---|
+| `useActionState` | Formularios (guardar, crear, editar) | `{ error: string }`, que el formulario muestra sin perder lo escrito |
+| `?error=<mensaje>` | Acciones sin formulario (borrar, reordenar) | `volverConError()` redirige con el mensaje en la URL |
+
+Los mensajes están escritos para que los lea una persona, no una máquina: por
+ejemplo, al intentar borrar una categoría con productos, dice cuántos hay y en
+qué subcategorías.
+
+**Sin sesión, una Server Action responde 500**, porque `exigirSesion()` lanza una
+excepción. Un 403 sería más prolijo; está anotado como pendiente.
 
 ## Escrituras
 
